@@ -1,0 +1,59 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: suhyuk0544
+    password: suhyuk1027
+    driver-class-name: org.h2.Driver
+    generate-unique-name: false
+
+  profiles:
+    include: oauth
+
+#  mustache:
+#    expose-session-attributes: true
+
+  h2.console:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+  logging:
+    level:
+      org.hibernate.SQL: debug
+
+  thymeleaf:
+
+    suffix: .html
+
+    prefix: classpath:templates/
+
+    cache: false
+  sql:
+    init:
+      platform: h2
+
+server:
+
+  port: 8080
+
+  tomcat:
+
+    #    connection-timeout: 20000
+
+    remoteip:
+
+      protocol-header:
+
+  servlet:
+
+    session:
+
+      timeout: 60m
+
+
+
+
