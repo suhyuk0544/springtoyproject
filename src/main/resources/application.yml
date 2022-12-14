@@ -1,4 +1,6 @@
+
 spring:
+
   datasource:
     url: jdbc:h2:mem:testdb
     username: suhyuk0544
@@ -8,6 +10,7 @@ spring:
 
   profiles:
     include: oauth
+
 
 #  mustache:
 #    expose-session-attributes: true
@@ -25,13 +28,13 @@ spring:
     level:
       org.hibernate.SQL: debug
 
-  thymeleaf:
-
-    suffix: .html
-
-    prefix: classpath:templates/
-
-    cache: false
+#  thymeleaf:
+#
+#    suffix: .html
+#
+#    prefix: classpath:templates/
+#
+#    cache: false
   sql:
     init:
       platform: h2
@@ -39,7 +42,6 @@ spring:
 server:
 
   port: 8080
-
   tomcat:
 
     #    connection-timeout: 20000
@@ -53,6 +55,9 @@ server:
     session:
 
       timeout: 60m
+  error:
+    whitelabel:
+      enabled: off
 
 
 
