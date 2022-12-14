@@ -83,7 +83,7 @@ public class WebController {
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE,MediaType.APPLICATION_JSON_VALUE)
                 .build();
 
         JSONObject jsonObject = webClient.get()

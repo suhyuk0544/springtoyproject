@@ -55,9 +55,6 @@ server:
     session:
 
       timeout: 60m
-  error:
-    whitelabel:
-      enabled: off
 
 
 

@@ -4,6 +4,7 @@ package com.example.springtoyproject.UserInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.Hibernate;
+import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 
 import javax.persistence.*;
 import java.util.Objects;
@@ -26,7 +27,10 @@ public class UserInfo {
     @Enumerated(EnumType.STRING)
     private Auth auth;
 
-    @Builder(builderMethodName = "userInfo")
+    @Column
+    private String provider;
+
+    @Builder(builderClassName = "user",builderMethodName = "userInfo")
     public UserInfo(String email,String password,Auth auth) {
 
         this.email = email;
@@ -35,4 +39,17 @@ public class UserInfo {
 
         this.auth = auth;
     }
+
+    @Builder(builderClassName = "oauth",builderMethodName = "oauthUserInfo")
+    public UserInfo(String email,Auth auth,String provider) {
+
+        this.email = email;
+
+        this.provider = provider;
+
+        this.auth = auth;
+
+    }
+
+
 }
