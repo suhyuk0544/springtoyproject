@@ -1,11 +1,17 @@
 package com.example.springtoyproject.controller;
 
 import com.example.springtoyproject.UserInfo.UserService;
+import com.example.springtoyproject.config.ApiKey;
+import com.fasterxml.jackson.core.*;
+import io.netty.util.internal.StringUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONArray;
-import net.minidev.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
+//import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +25,11 @@ import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import javax.servlet.http.HttpServletRequest;
 import java.awt.*;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 
@@ -38,55 +49,82 @@ public class WebController {
     @GetMapping("/ncp")
     public String NcpPush(){
 
-        String AccessKey = "XqF575b0EH4sCOgkPxJh";
-
-        String serviceId = "ncp:sms:kr:286941749194:suhyuk0544";
-
-        String content = "test";
+        StringBuilder sb = new StringBuilder();
 
         WebClient webClient = WebClient.builder()
-                .baseUrl("https://sens.apigw.ntruss.com")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE)
-                .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
-                .defaultHeader("x-ncp-iam-access-key",AccessKey)
-                .defaultHeader("x-ncp-apigw-signature-v2",userService.makeSignature(Long.toString(System.currentTimeMillis()),"POST","/sms/v2/services/"+serviceId+"/messages"))
+                .baseUrl("https://open.neis.go.kr")
                 .build();
 
-        JSONObject data = new JSONObject();
-        data.put("type","sms");
-        data.put("from","01093500544");
-        data.put("content",content);
+        LocalDate now = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String FormatNow = now.format(formatter);
 
-        JSONObject object = new JSONObject();
-
-        JSONArray json = new JSONArray();
-        object.put("to","01066834349");
-        json.add(object);
-        data.put("messages",json);
-
-        log.info(data.toJSONString());
-
-        JSONObject jsonObject = webClient.post()
-                .uri("/sms/v2/services/"+serviceId+"/messages")
-                .bodyValue(data)
+        String s = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/hub/mealServiceDietInfo")
+                        .queryParam("KEY", ApiKey.neiskey.getKey())
+                        .queryParam("Type","json")
+                        .queryParam("pIndex","1")
+                        .queryParam("ATPT_OFCDC_SC_CODE","J10")
+                        .queryParam("SD_SCHUL_CODE","7530581")
+                        .queryParam("MLSV_YMD",FormatNow)
+                        .build())
                 .retrieve()
-                .bodyToMono(JSONObject.class)
+                .bodyToMono(String.class)
                 .block();
 
-        log.info(Objects.requireNonNull(jsonObject).toJSONString());
+        JSONObject jsonObject = new JSONObject(s);
+        JSONArray jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
+        jsonObject = jsonArray.getJSONObject(1);
+        jsonArray = jsonObject.getJSONArray("row");
+        jsonObject = jsonArray.getJSONObject(0);
+        String content = (String) jsonObject.get("DDISH_NM");
 
-        return "/main";
+        content = content.replace("<br/>","");
+
+        boolean r = true;
+        String w = "";
+        for (int i = 0; i < content.length(); i++) {
+            String q = String.valueOf(content.charAt(i));
+            if (!q.equals(" ")) {
+                if (!q.equals("(") && r) {
+                    sb.append(q);
+                } else if (q.equals(")")) {
+                    r = true;
+                    sb.append(" ");
+                } else {
+                    r = false;
+                }
+            }else if (!w.equals(" ")){
+                sb.append(" ");
+            }
+            w = q;
+        }
+        log.info(String.valueOf(sb));
+
+        userService.ncp(sb.toString());
+
+        return "redirect:/main";
     }
 
     @GetMapping("/school")
     public String School(){
 
+        StringBuilder sb = new StringBuilder();
+
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE,MediaType.APPLICATION_JSON_VALUE)
                 .build();
 
-        JSONObject jsonObject = webClient.get()
+        LocalDate now = LocalDate.now();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        String FormatNow = now.format(formatter);
+
+        log.info(FormatNow);
+
+        String s = webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/hub/mealServiceDietInfo")
                         .queryParam("KEY","73156fb2366246a2bd3456e038d04375")
@@ -94,15 +132,29 @@ public class WebController {
                         .queryParam("pIndex","1")
                         .queryParam("ATPT_OFCDC_SC_CODE","J10")
                         .queryParam("SD_SCHUL_CODE","7530581")
-                        .queryParam("MLSV_YMD","20221212")
+                        .queryParam("MLSV_YMD",FormatNow)
                         .build())
                 .retrieve()
-                .bodyToMono(JSONObject.class)
+                .bodyToMono(String.class)
                 .block();
 
-        log.info(Objects.requireNonNull(jsonObject).toJSONString());
 
-        return "";
+
+        JSONObject jsonObject = new JSONObject(s);
+        JSONArray jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
+        log.info(jsonArray.toString());
+        jsonObject = jsonArray.getJSONObject(1);
+        log.info(jsonObject.toString());
+        jsonArray = jsonObject.getJSONArray("row");
+        log.info(jsonArray.toString());
+        jsonObject = jsonArray.getJSONObject(0);
+        log.info(jsonObject.toString());
+        String content = (String) jsonObject.get("DDISH_NM");
+
+        log.info(content);
+//        log.info(Objects.requireNonNull(jsonObject).toJSONString());
+
+        return "redirect:/main";
     }
 
     @GetMapping("/main/geoLocation")
@@ -134,8 +186,9 @@ public class WebController {
                 .bodyToMono(JSONObject.class)
                 .block();
 
-        log.info((Objects.requireNonNull(jsonObject).toJSONString()));
+//        log.info((Objects.requireNonNull(jsonObject)));
 
+        log.info(jsonObject.toString());
 
         return "redirect:/main";
     }
