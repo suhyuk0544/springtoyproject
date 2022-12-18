@@ -2,6 +2,7 @@ package com.example.springtoyproject.controller;
 
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
+import com.example.springtoyproject.controller.api.ApiService;
 import com.fasterxml.jackson.core.*;
 import io.netty.util.internal.StringUtil;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,8 @@ public class WebController {
 
     private final UserService userService;
 
+    private final ApiService apiService;
+
     @GetMapping("/main")
     public String main(){
 
@@ -50,6 +53,7 @@ public class WebController {
     public String NcpPush(){
 
         StringBuilder sb = new StringBuilder();
+
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
@@ -82,27 +86,11 @@ public class WebController {
 
         content = content.replace("<br/>","");
 
-        boolean r = true;
-        String w = "";
-        for (int i = 0; i < content.length(); i++) {
-            String q = String.valueOf(content.charAt(i));
-            if (!q.equals(" ")) {
-                if (!q.equals("(") && r) {
-                    sb.append(q);
-                } else if (q.equals(")")) {
-                    r = true;
-                    sb.append(" ");
-                } else {
-                    r = false;
-                }
-            }else if (!w.equals(" ")){
-                sb.append(" ");
-            }
-            w = q;
-        }
+        sb = apiService.MakeFormat(content);
+
         log.info(String.valueOf(sb));
 
-        userService.ncp(sb.toString());
+        apiService.ncp(sb.toString());
 
         return "redirect:/main";
     }
@@ -171,7 +159,7 @@ public class WebController {
                 .baseUrl("https://geolocation.apigw.ntruss.com")
                 .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
                 .defaultHeader("x-ncp-iam-access-key",AccessKey)
-                .defaultHeader("x-ncp-apigw-signature-v2",userService.makeSignature(Long.toString(System.currentTimeMillis()),"GET","/geolocation/v2/geoLocation?ip=222.101.226.135&responseFormatType=json"))
+                .defaultHeader("x-ncp-apigw-signature-v2",apiService.makeSignature(Long.toString(System.currentTimeMillis()),"GET","/geolocation/v2/geoLocation?ip=222.101.226.135&responseFormatType=json"))
                 .build();
 
         JSONObject jsonObject = webClient.get()
