@@ -11,6 +11,7 @@
     <groupId>com.example</groupId>
     <artifactId>springtoyproject</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
     <name>springtoyproject</name>
     <description>springtoyproject</description>
     <properties>

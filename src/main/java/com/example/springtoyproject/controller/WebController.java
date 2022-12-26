@@ -3,36 +3,21 @@ package com.example.springtoyproject.controller;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
 import com.example.springtoyproject.controller.api.ApiService;
-import com.fasterxml.jackson.core.*;
-import io.netty.util.internal.StringUtil;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
-//import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import javax.servlet.http.HttpServletRequest;
-import java.awt.*;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -49,8 +34,11 @@ public class WebController {
         return "form/some";
     }
 
-    @GetMapping("/ncp")
-    public String NcpPush(){
+//    @RequestMapping(value = "/KakaoBot",method = RequestMethod.POST,produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    @RequestMapping(value = "/ncp",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
+    public String NcpPush(@RequestBody JSONObject KakaoJson){
+
 
         StringBuilder sb = new StringBuilder();
 
@@ -88,11 +76,12 @@ public class WebController {
 
         sb = apiService.MakeFormat(content);
 
+        log.info(jsonObject.toString());
         log.info(String.valueOf(sb));
 
-        apiService.ncp(sb.toString());
+//        apiService.ncp(sb.toString());
 
-        return "redirect:/main";
+        return sb.toString();
     }
 
     @GetMapping("/school")

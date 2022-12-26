@@ -69,12 +69,12 @@ public class ApiService {
                     sb.append(q);
                 } else if (q.equals(")")) {
                     r = true;
-                    sb.append(" ");
+//                    sb.append(" ");
                 } else {
                     r = false;
                 }
             }else if (!w.equals(" ")){
-                sb.append(" ");
+                sb.append("\n");
             }
             w = q;
         }

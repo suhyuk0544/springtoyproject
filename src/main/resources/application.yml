@@ -28,13 +28,6 @@ spring:
     level:
       org.hibernate.SQL: debug
 
-#  thymeleaf:
-#
-#    suffix: .html
-#
-#    prefix: classpath:templates/
-#
-#    cache: false
   sql:
     init:
       platform: h2
