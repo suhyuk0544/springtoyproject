@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -14,75 +15,79 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriBuilder;
 
 import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
-@Controller
-@RequiredArgsConstructor
+@RestController
 @Slf4j
 public class WebController {
 
-    private final UserService userService;
+    @Autowired
+    private UserService userService;
 
-    private final ApiService apiService;
-
-    @GetMapping("/main")
-    public String main(){
-
-        return "form/some";
-    }
-
-//    @RequestMapping(value = "/KakaoBot",method = RequestMethod.POST,produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    @RequestMapping(value = "/ncp",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public String NcpPush(@RequestBody JSONObject KakaoJson){
+    @Autowired
+    private ApiService apiService;
 
 
-        StringBuilder sb = new StringBuilder();
+    @RequestMapping(value = "/KakaoBot",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
+    public String NcpPush(@RequestBody Map<String,Object> kakao){
 
+        JSONObject kakaoJson = new JSONObject(kakao);
+        JSONObject response = new JSONObject();
+
+        log.info(kakaoJson.toString());
+
+        kakaoJson = apiService.Kakao(kakaoJson);
+
+        log.info(kakaoJson.toString());
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
                 .build();
 
-        LocalDate now = LocalDate.now();
+
+        LocalDate now = LocalDate.parse((String)kakaoJson.get("date"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         String FormatNow = now.format(formatter);
 
-        String s = webClient.get()
+
+        String diet = webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/hub/mealServiceDietInfo")
+
                         .queryParam("KEY", ApiKey.neiskey.getKey())
                         .queryParam("Type","json")
                         .queryParam("pIndex","1")
                         .queryParam("ATPT_OFCDC_SC_CODE","J10")
                         .queryParam("SD_SCHUL_CODE","7530581")
                         .queryParam("MLSV_YMD",FormatNow)
+
                         .build())
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
 
-        JSONObject jsonObject = new JSONObject(s);
+        JSONObject jsonObject = new JSONObject(diet);
         JSONArray jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
-        jsonObject = jsonArray.getJSONObject(1);
+         jsonObject = jsonArray.getJSONObject(1);
         jsonArray = jsonObject.getJSONArray("row");
         jsonObject = jsonArray.getJSONObject(0);
         String content = (String) jsonObject.get("DDISH_NM");
 
         content = content.replace("<br/>","");
 
-        sb = apiService.MakeFormat(content);
+        StringBuilder sb = apiService.MakeFormat(content);
 
-        log.info(jsonObject.toString());
-        log.info(String.valueOf(sb));
+        response = apiService.kakaoResponse(response,sb);
 
-//        apiService.ncp(sb.toString());
-
-        return sb.toString();
+        return response.toString();
     }
+
 
     @GetMapping("/school")
     public String School(){
