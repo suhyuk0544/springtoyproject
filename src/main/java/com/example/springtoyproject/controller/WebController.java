@@ -1,24 +1,19 @@
 package com.example.springtoyproject.controller;
 
 import com.example.springtoyproject.UserInfo.UserService;
-import com.example.springtoyproject.config.ApiKey;
 import com.example.springtoyproject.controller.api.ApiService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -42,7 +37,12 @@ public class WebController {
 
         log.info(kakaoJson.toString());
 
-        kakaoJson = apiService.Kakao(kakaoJson);
+        URI uri = null;
+        try {
+            uri = apiService.Kakao(kakaoJson).build();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
 
         log.info(kakaoJson.toString());
 
@@ -51,37 +51,19 @@ public class WebController {
                 .build();
 
 
-        LocalDate now = LocalDate.parse((String)kakaoJson.get("date"));
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        String FormatNow = now.format(formatter);
-
+        log.info(uri.toString());
 
         String diet = webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/hub/mealServiceDietInfo")
-
-                        .queryParam("KEY", ApiKey.neiskey.getKey())
-                        .queryParam("Type","json")
-                        .queryParam("pIndex","1")
-                        .queryParam("ATPT_OFCDC_SC_CODE","J10")
-                        .queryParam("SD_SCHUL_CODE","7530581")
-                        .queryParam("MLSV_YMD",FormatNow)
-
-                        .build())
+                .uri(uri.toString())
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
 
-        JSONObject jsonObject = new JSONObject(diet);
-        JSONArray jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
-         jsonObject = jsonArray.getJSONObject(1);
-        jsonArray = jsonObject.getJSONArray("row");
-        jsonObject = jsonArray.getJSONObject(0);
-        String content = (String) jsonObject.get("DDISH_NM");
 
-        content = content.replace("<br/>","");
+        log.info(diet);
 
-        StringBuilder sb = apiService.MakeFormat(content);
+
+        StringBuilder sb = apiService.FormatJson(diet);
 
         response = apiService.kakaoResponse(response,sb);
 
