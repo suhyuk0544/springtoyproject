@@ -161,6 +161,7 @@ public class ApiService {
             }
             w = q;
         }
+        sb.append("\n");
         return sb;
     }
 
