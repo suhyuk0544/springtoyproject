@@ -49,6 +49,7 @@ public class ApiService {
             uriBuilder.addParameter("MLSV_YMD",TimeFormat(new JSONObject((String) jsonObject.get("sys_date"))));
 
             return uriBuilder;
+
         }catch (JSONException e){
 
             JSONObject date_period = new JSONObject((String) jsonObject.get("sys_date_period"));
@@ -71,10 +72,10 @@ public class ApiService {
         jsonArray = jsonObject.getJSONArray("row");
 
         for (int i = 0; i < jsonArray.length(); i++) {
+
             jsonObject = jsonArray.getJSONObject(i);
-            String content = (String) jsonObject.get("DDISH_NM");
-            content = content.replace("<br/>","");
-            sb.append(MakeFormat(content,LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()));
+
+            sb.append(MakeFormat(((String) jsonObject.get("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()));
         }
         return sb;
     }
@@ -125,13 +126,14 @@ public class ApiService {
     }
 
     public JSONObject kakaoResponse(JSONObject jsonObject,StringBuilder sb){
+
         JSONObject Text = new JSONObject();
         JSONObject outputs = new JSONObject();
+
         Text.put("simpleText",new JSONObject().put("text",sb));
         outputs.put("outputs",new JSONArray().put(Text));
         jsonObject.put("version","2.0");
         jsonObject.put("template",outputs);
-
 
         return jsonObject;
     }
@@ -140,9 +142,10 @@ public class ApiService {
     public StringBuilder MakeFormat(String content,String date){
         StringBuilder sb = new StringBuilder();
         sb.append(date).append("\n");
-        if (content == null){
+
+        if (content == null)
             return sb.append("급식이 없습니다");
-        }
+
         boolean r = true;
         String w = "";
         for (int i = 0; i < content.length(); i++) {
