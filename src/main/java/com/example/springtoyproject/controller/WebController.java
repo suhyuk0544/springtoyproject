@@ -1,5 +1,7 @@
 package com.example.springtoyproject.controller;
 
+import com.example.springtoyproject.School.School;
+import com.example.springtoyproject.School.SchoolJpa;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.controller.api.ApiService;
 import lombok.extern.slf4j.Slf4j;
@@ -9,14 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriBuilder;
+
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+
+
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @Slf4j
@@ -28,14 +32,14 @@ public class WebController {
     @Autowired
     private ApiService apiService;
 
+    @Autowired
+    private SchoolJpa schoolJpa;
 
     @RequestMapping(value = "/KakaoBot",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public String NcpPush(@RequestBody Map<String,Object> kakao){
+    public String KakaoBotDiet(@RequestBody Map<String,Object> kakao){
 
         JSONObject kakaoJson = new JSONObject(kakao);
         JSONObject response = new JSONObject();
-
-        log.info(kakaoJson.toString());
 
         URI uri = null;
         try {
@@ -44,24 +48,16 @@ public class WebController {
             e.printStackTrace();
         }
 
-        log.info(kakaoJson.toString());
-
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
                 .build();
 
 
-        log.info(uri.toString());
-
         String diet = webClient.get()
-                .uri(uri.toString())
+                .uri(Objects.requireNonNull(uri).toString())
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
-
-
-        log.info(diet);
-
 
         StringBuilder sb = apiService.FormatJson(diet);
 
@@ -71,52 +67,46 @@ public class WebController {
     }
 
 
-    @GetMapping("/school")
-    public String School(){
+    @RequestMapping(value = "/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
+    public String School(@RequestBody HashMap<String,Object> KakaoJson){
 
-        StringBuilder sb = new StringBuilder();
+        JSONObject kakaoJson = new JSONObject(KakaoJson);
+
+        JSONObject jsonObject = kakaoJson.getJSONObject("action");
+        jsonObject = jsonObject.getJSONObject("params");
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
                 .build();
 
-        LocalDate now = LocalDate.now();
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-
-        String FormatNow = now.format(formatter);
-
-        log.info(FormatNow);
-
-        String s = webClient.get()
+        JSONObject finalJsonObject = jsonObject;
+        String schul_info = webClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/hub/mealServiceDietInfo")
-                        .queryParam("KEY","73156fb2366246a2bd3456e038d04375")
-                        .queryParam("Type","json")
-                        .queryParam("pIndex","1")
-                        .queryParam("ATPT_OFCDC_SC_CODE","J10")
-                        .queryParam("SD_SCHUL_CODE","7530581")
-                        .queryParam("MLSV_YMD",FormatNow)
-                        .build())
+                        .path("/hub/schoolInfo")
+//                        .queryParam("SCHUL_NM", finalJsonObject.getJSONObject())
+
+                        .build()
+
+                )
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
+        JSONObject school = new JSONObject(schul_info);
+
+        JSONArray jsonArray = school.getJSONArray("schoolInfo");
+        jsonArray = jsonArray.getJSONArray(1);
+
+        if (schoolJpa.findById((String) jsonArray.get(0)).isPresent())
+            schoolJpa.save(School.builder()
+                    .ATPT_OFCDC_SC_CODE((String) jsonArray.get(0))
+                    .SD_SCHUL_CODE((String) jsonArray.get(2))
+                    .SCHUL_NM((String) jsonArray.get(3))
+                    .build());
 
 
 
-        JSONObject jsonObject = new JSONObject(s);
-        JSONArray jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
-        log.info(jsonArray.toString());
-        jsonObject = jsonArray.getJSONObject(1);
-        log.info(jsonObject.toString());
-        jsonArray = jsonObject.getJSONArray("row");
-        log.info(jsonArray.toString());
-        jsonObject = jsonArray.getJSONObject(0);
-        log.info(jsonObject.toString());
-        String content = (String) jsonObject.get("DDISH_NM");
 
-        log.info(content);
-//        log.info(Objects.requireNonNull(jsonObject).toJSONString());
+
 
         return "redirect:/main";
     }

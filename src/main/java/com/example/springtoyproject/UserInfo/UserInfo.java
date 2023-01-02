@@ -1,12 +1,14 @@
 package com.example.springtoyproject.UserInfo;
 
 
+import com.example.springtoyproject.School.School;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.Hibernate;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -17,39 +19,24 @@ public class UserInfo {
 
     @Id
     @Column(nullable = false)
-    private String email;
-
-    @Column
-    private String password;
+    private String id;
 
     @Column(nullable = false)
     @JsonIgnore
     @Enumerated(EnumType.STRING)
     private Auth auth;
 
-    @Column
-    private String provider;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private School school;
 
-    @Builder(builderClassName = "user",builderMethodName = "userInfo")
-    public UserInfo(String email,String password,Auth auth) {
+    @Builder
+    public UserInfo(String id,Auth auth,School school) {
 
-        this.email = email;
-
-        this.password = password;
-
-        this.auth = auth;
-    }
-
-    @Builder(builderClassName = "oauth",builderMethodName = "oauthUserInfo")
-    public UserInfo(String email,Auth auth,String provider) {
-
-        this.email = email;
-
-        this.provider = provider;
+        this.id = id;
 
         this.auth = auth;
 
+        this.school = school;
     }
-
 
 }

@@ -11,6 +11,4 @@ import java.util.Optional;
 @Repository
 public interface UserInfoJpa extends JpaRepository<UserInfo,String>{
 
-    Optional<UserInfo> findByEmail(String email);
-
 }
