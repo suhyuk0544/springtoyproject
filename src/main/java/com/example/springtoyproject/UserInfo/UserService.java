@@ -31,27 +31,4 @@ public class UserService {
     private UserInfoJpa userInfoJpa;
 
 
-
-    public UserInfo login(JSONObject jsonObject){
-
-        Map<String, Object> response = (Map<String, Object>) jsonObject;
-
-        if (userInfoJpa.findByEmail((String) response.get("email")).isEmpty()) {
-            UserInfo userInfo = UserInfo.oauthUserInfo()
-                    .email((String) response.get("email"))
-                    .provider((String) response.get("NAVER"))
-                    .auth(Auth.ROLE_USER)
-                    .build();
-        }
-
-        UserInfo userInfo = UserInfo.oauthUserInfo()
-                .email((String) response.get("email"))
-                .provider((String) response.get("NAVER"))
-                .auth(Auth.ROLE_USER)
-                .build();
-
-
-        return userInfoJpa.save(userInfo);
-    }
-
 }
