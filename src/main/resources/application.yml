@@ -8,15 +8,13 @@ spring:
     driver-class-name: org.h2.Driver
     generate-unique-name: false
 
-  profiles:
-    include: oauth
-
-
 #  mustache:
 #    expose-session-attributes: true
 
   h2.console:
     enabled: true
+    settings:
+      web-allow-others: true
   jpa:
     hibernate:
       ddl-auto: create
@@ -49,7 +47,8 @@ server:
 
       timeout: 60m
 
-
+  #  main:
+  #    web-application-type: none
 
 
 
