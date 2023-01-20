@@ -2,13 +2,10 @@ package com.example.springtoyproject.School;
 
 
 import com.example.springtoyproject.UserInfo.UserInfo;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.crypto.Mac;
 import javax.persistence.*;
 import java.util.List;
 
@@ -19,7 +16,7 @@ public class School {
 
 
     @Id
-    @Column
+    @Column(name = "SD_SCHUL_CODE")
     private String SD_SCHUL_CODE;
 
     @Column

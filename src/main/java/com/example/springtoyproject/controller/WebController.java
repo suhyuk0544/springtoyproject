@@ -3,6 +3,7 @@ package com.example.springtoyproject.controller;
 import com.example.springtoyproject.School.School;
 import com.example.springtoyproject.School.SchoolJpa;
 import com.example.springtoyproject.UserInfo.UserService;
+import com.example.springtoyproject.config.ApiKey;
 import com.example.springtoyproject.controller.api.ApiService;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
@@ -35,7 +36,7 @@ public class WebController {
     @Autowired
     private SchoolJpa schoolJpa;
 
-    @RequestMapping(value = "/KakaoBot",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public String KakaoBotDiet(@RequestBody Map<String,Object> kakao){
 
         JSONObject kakaoJson = new JSONObject(kakao);
@@ -67,7 +68,7 @@ public class WebController {
     }
 
 
-    @RequestMapping(value = "/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/KakaoBot/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public String School(@RequestBody HashMap<String,Object> KakaoJson){
 
         JSONObject kakaoJson = new JSONObject(KakaoJson);
@@ -83,37 +84,53 @@ public class WebController {
         String schul_info = webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/hub/schoolInfo")
-//                        .queryParam("SCHUL_NM", finalJsonObject.getJSONObject())
-
+                        .queryParam("SCHUL_NM", finalJsonObject.get("sys_constant"))
+                        .queryParam("KEY", ApiKey.neiskey.getKey())
+                        .queryParam("Type","json")
+                        .queryParam("pIndex","1")
                         .build()
-
                 )
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
+
         JSONObject school = new JSONObject(schul_info);
 
         JSONArray jsonArray = school.getJSONArray("schoolInfo");
-        jsonArray = jsonArray.getJSONArray(1);
 
-        if (schoolJpa.findById((String) jsonArray.get(0)).isPresent())
+        school = jsonArray.getJSONObject(1);
+        jsonArray = school.getJSONArray("row");
+        log.info(school.toString());
+        log.info(jsonArray.toString());
+
+        jsonObject = jsonArray.getJSONObject(0);
+
+        if (schoolJpa.findBySD_SCHUL_CODE((String) jsonObject.get("SD_SCHUL_CODE")).isEmpty())
             schoolJpa.save(School.builder()
-                    .ATPT_OFCDC_SC_CODE((String) jsonArray.get(0))
-                    .SD_SCHUL_CODE((String) jsonArray.get(2))
-                    .SCHUL_NM((String) jsonArray.get(3))
+                    .ATPT_OFCDC_SC_CODE((String) jsonObject.get("ATPT_OFCDC_SC_CODE"))
+                    .SD_SCHUL_CODE((String) jsonObject.get("SD_SCHUL_CODE"))
+                    .SCHUL_NM((String) jsonObject.get("SCHUL_NM"))
                     .build());
-
-
-
-
-
 
         return "redirect:/main";
     }
 
+    @RequestMapping(value = "/KakaoBot/school/detail",method = {RequestMethod.GET})
+    public String SchoolDetail(@RequestBody HashMap<String,Object> kakao,@RequestParam(value = "ATPT_OFCDC_SC_CODE") String ATPT_OFCDC_SC_CODE,@RequestParam("SD_SCHUL_CODE") String SD_SCHUL_CODE,@RequestParam(value = "SCHUL_NM") String SCHUL_NM){
+
+
+        if (schoolJpa.findBySD_SCHUL_CODE(SD_SCHUL_CODE).isEmpty())
+            schoolJpa.save(School.builder()
+                    .ATPT_OFCDC_SC_CODE(ATPT_OFCDC_SC_CODE)
+                    .SD_SCHUL_CODE(SD_SCHUL_CODE)
+                    .SCHUL_NM(SCHUL_NM)
+                    .build());
+
+        return "";
+    }
+
     @GetMapping("/main/geoLocation")
     public String GeoLocation(HttpServletRequest request){
-
 
         String ip = request.getHeader("X-FORWARDED-FOR");
 
