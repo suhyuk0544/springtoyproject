@@ -13,7 +13,7 @@ import java.sql.SQLException;
 public class H2ServerConfig {
 
     @Bean
-    public Server H2Server() throws SQLException {
+    public Server h2TcpServer() throws SQLException {
         return Server.createTcpServer().start();
     }
 
