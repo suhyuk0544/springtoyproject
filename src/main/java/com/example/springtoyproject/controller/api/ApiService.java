@@ -12,6 +12,7 @@ import org.json.JSONArray;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 
@@ -62,7 +63,28 @@ public class ApiService {
         }
     }
 
-    public StringBuilder FormatJson(String diet){
+    public JSONObject FormatRequestKoGptJson(String text){
+
+        JSONObject jsonObject = new JSONObject();
+
+        jsonObject.put("prompt",text);
+        jsonObject.put("max_tokens","120");
+        jsonObject.put("n","1");
+
+        return jsonObject;
+    }
+
+    public String FormatKakaoBody(JSONObject KakaoObject) {
+
+        Assert.notNull(KakaoObject,"KakaoObject cannot be null");
+
+        JSONObject jsonObject = KakaoObject.getJSONObject("action");
+        jsonObject = jsonObject.getJSONObject("params");
+
+        return (String) jsonObject.get("sys_constant");
+    }
+
+    public StringBuilder FormatDietJson(String diet){
 
         StringBuilder sb = new StringBuilder();
 
@@ -71,12 +93,15 @@ public class ApiService {
         jsonObject = jsonArray.getJSONObject(1);
         jsonArray = jsonObject.getJSONArray("row");
 
+        
+
         for (int i = 0; i < jsonArray.length(); i++) {
 
             jsonObject = jsonArray.getJSONObject(i);
 
             sb.append(MakeFormat(((String) jsonObject.get("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()));
         }
+
         return sb;
     }
 
