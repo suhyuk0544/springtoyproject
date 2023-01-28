@@ -16,7 +16,7 @@ public class School {
 
 
     @Id
-    @Column(name = "SD_SCHUL_CODE")
+    @Column
     private String SD_SCHUL_CODE;
 
     @Column

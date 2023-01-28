@@ -60,12 +60,43 @@ public class WebController {
                 .bodyToMono(String.class)
                 .block();
 
-        StringBuilder sb = apiService.FormatJson(diet);
+        StringBuilder sb = apiService.FormatDietJson(diet);
 
         response = apiService.kakaoResponse(response,sb);
 
         return response.toString();
     }
+
+    //    @RequestMapping(params = "/kakao/KoGpt",method = RequestMethod.POST,produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/kakao/KoGpt")
+    public String Kakao(){
+
+//        JSONObject kakaoJson = new JSONObject(kakaoMap);
+
+        JSONObject request = apiService.FormatRequestKoGptJson("오늘 아침 하늘은 곧 비가 올 것 같아서");
+
+
+        WebClient webClient = WebClient.builder()
+                .baseUrl("https://api.kakaobrain.com")
+                .defaultHeader("Content-Type",MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader("Authorization","KakaoAK " + ApiKey.RESTAPIKEY.getKey())
+                .build();
+
+        log.info(request.toString());
+
+
+        JSONObject jsonObject = webClient.post()
+                .uri("/v1/inference/kogpt/generation")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(JSONObject.class)
+                .block();
+
+        return jsonObject.toString();
+
+    }
+
+
 
 
     @RequestMapping(value = "/KakaoBot/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
