@@ -43,8 +43,8 @@ public class ApiService {
                 .addParameter("ATPT_OFCDC_SC_CODE","J10")
                 .addParameter("SD_SCHUL_CODE","7530581");
 
-        JSONObject jsonObject = KakaoObject.getJSONObject("action");
-        jsonObject = jsonObject.getJSONObject("params");
+        JSONObject jsonObject = FormatKakaoBody(KakaoObject);
+
         try {
 
             uriBuilder.addParameter("MLSV_YMD",TimeFormat(new JSONObject((String) jsonObject.get("sys_date"))));
@@ -67,21 +67,22 @@ public class ApiService {
 
         JSONObject jsonObject = new JSONObject();
 
+        jsonObject.put("model","text-davinci-003");
         jsonObject.put("prompt",text);
-        jsonObject.put("max_tokens","120");
-        jsonObject.put("n","1");
+        jsonObject.put("max_tokens",120);
+        jsonObject.put("temperature",0.2);
 
         return jsonObject;
     }
 
-    public String FormatKakaoBody(JSONObject KakaoObject) {
+    public JSONObject FormatKakaoBody(JSONObject KakaoObject) {
 
         Assert.notNull(KakaoObject,"KakaoObject cannot be null");
 
         JSONObject jsonObject = KakaoObject.getJSONObject("action");
         jsonObject = jsonObject.getJSONObject("params");
 
-        return (String) jsonObject.get("sys_constant");
+        return jsonObject;
     }
 
     public StringBuilder FormatDietJson(String diet){
@@ -150,8 +151,9 @@ public class ApiService {
 
     }
 
-    public JSONObject kakaoResponse(JSONObject jsonObject,StringBuilder sb){
+    public JSONObject kakaoResponse(StringBuilder sb){
 
+        JSONObject jsonObject = new JSONObject();
         JSONObject Text = new JSONObject();
         JSONObject outputs = new JSONObject();
 
