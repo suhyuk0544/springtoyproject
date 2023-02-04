@@ -1,0 +1,41 @@
+# curl -v -X POST "https://api.kakaobrain.com/v1/inference/kogpt/generation"
+#    -H "Content-Type: application/json"
+#    -H "Authorization: KakaoAK ${REST_API_KEY}"
+#    -d '{
+#        "prompt": "오늘 아침 하늘은 곧 비가 올 것 같아서",
+#        "max_tokens": 120,
+#        "n": 2
+#        }'
+POST https://api.kakaobrain.com/v1/inference/kogpt/generation
+Authorization: KakaoAK c4f024efaaaa92197ba9fb413d0246ff
+Content-Type: application/json
+
+{
+        "prompt": "정보:거주지 부산, 나이 20대, 성별 남자,  직업 기자, 말투 친절함 정보를 바탕으로 질문에 답하세요. Q:안녕하세요 반갑습니다. 자기소개 부탁드려도 될까요? A:",
+
+        "max_tokens": 120
+}
+
+###
+
+POST https://api.openai.com/v1/completions
+Authorization: Bearer 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
+Content-Type: application/json
+
+//{
+//        "model": "text-davinci-003",
+//        "max_tokens": 120,
+//        "temperature": 0.2,
+//        "prompt": "i am boring"
+//
+//}
+{
+  "max_tokens":120,
+  "temperature":0.2,
+  "model":"text-davinci-003",
+  "prompt":"make your api code use java"
+}
+
+
+###
+

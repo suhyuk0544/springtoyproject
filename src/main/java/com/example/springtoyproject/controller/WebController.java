@@ -5,13 +5,16 @@ import com.example.springtoyproject.School.SchoolJpa;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
 import com.example.springtoyproject.controller.api.ApiService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 
 import javax.servlet.http.HttpServletRequest;
@@ -22,6 +25,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 @RestController
 @Slf4j
@@ -62,41 +66,58 @@ public class WebController {
 
         StringBuilder sb = apiService.FormatDietJson(diet);
 
-        response = apiService.kakaoResponse(response,sb);
+        response = apiService.kakaoResponse(sb);
 
         return response.toString();
     }
 
-    //    @RequestMapping(params = "/kakao/KoGpt",method = RequestMethod.POST,produces = MediaType.APPLICATION_JSON_VALUE)
-    @GetMapping("/kakao/KoGpt")
-    public String Kakao(){
+    @RequestMapping(value = "/KakaoBot/ChatGpt",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
+    public String Kakao(@RequestBody Map<String,Object> kakaoMap){
 
-//        JSONObject kakaoJson = new JSONObject(kakaoMap);
+        JSONObject kakaoJson = new JSONObject(kakaoMap);
 
-        JSONObject request = apiService.FormatRequestKoGptJson("오늘 아침 하늘은 곧 비가 올 것 같아서");
-
-
-        WebClient webClient = WebClient.builder()
-                .baseUrl("https://api.kakaobrain.com")
-                .defaultHeader("Content-Type",MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader("Authorization","KakaoAK " + ApiKey.RESTAPIKEY.getKey())
-                .build();
-
-        log.info(request.toString());
+        JSONObject request = apiService.FormatRequestKoGptJson((String) apiService.FormatKakaoBody(kakaoJson).get("sys_constant"));
 
 
-        JSONObject jsonObject = webClient.post()
-                .uri("/v1/inference/kogpt/generation")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(JSONObject.class)
-                .block();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add(HttpHeaders.AUTHORIZATION,"Bearer " + ApiKey.OPENAIAPIKEY.getKey());
 
-        return jsonObject.toString();
+        HttpEntity<String> req = new HttpEntity<>(request.toString(),headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity("https://api.openai.com/v1/completions",req,String.class);
 
+        JSONObject response = new JSONObject(responseEntity.getBody());
+
+        JSONArray jsonArray = response.getJSONArray("choices");
+
+        response = jsonArray.getJSONObject(0);
+
+        response = apiService.kakaoResponse(new StringBuilder((String) response.get("text")));
+
+//
+//        WebClient webClient = WebClient.builder()
+//                .baseUrl("https://api.openai.com/v1/completions")
+//                .defaultHeader(HttpHeaders.CONTENT_TYPE,MediaType.APPLICATION_JSON_VALUE)
+//                .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer " + ApiKey.OPENAIAPIKEY.getKey())
+//                .build();
+
+//        JSONObject jsonObject = webClient.post()
+//                .bodyValue(request)
+//                .retrieve()
+////                .onStatus(
+////                        httpStatus -> httpStatus != HttpStatus.OK,
+////                        clientResponse -> clientResponse.createException()
+////                                .flatMap(it -> Mono.error(new RuntimeException("code : " + clientResponse.statusCode()))))
+//                .bodyToMono(JSONObject.class)
+////                .onErrorResume(throwable -> Mono.error(new RuntimeException(throwable)))
+//
+//                .block();
+//
+//        log.info(jsonObject.toString());
+
+        return response.toString();
     }
-
-
 
 
     @RequestMapping(value = "/KakaoBot/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
@@ -192,18 +213,9 @@ public class WebController {
 
         log.info(jsonObject.toString());
 
-        return "redirect:/main";
+        return jsonObject.toString();
     }
 
-
-//    @GetMapping("/oauth/naver")
-//    public String oauth2(){
-//
-//        StringBuilder stringBuilder = new StringBuilder();
-//
-//        stringBuilder.append()
-//
-//    }
 
     @RequestMapping(value = "/oauth2/code/naver",method = {RequestMethod.GET,RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public void callback(@RequestParam(value = "code") String code,@RequestParam(value = "state") String state,@RequestParam(value = "error_description") String error_description){
