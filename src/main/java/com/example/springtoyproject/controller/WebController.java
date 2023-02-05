@@ -76,6 +76,8 @@ public class WebController {
 
         JSONObject kakaoJson = new JSONObject(kakaoMap);
 
+        log.info(kakaoJson.toString());
+
         JSONObject request = apiService.FormatRequestKoGptJson((String) apiService.FormatKakaoBody(kakaoJson).get("sys_constant"));
 
 
@@ -113,7 +115,6 @@ public class WebController {
 ////                .onErrorResume(throwable -> Mono.error(new RuntimeException(throwable)))
 //
 //                .block();
-//
 //        log.info(jsonObject.toString());
 
         return response.toString();
