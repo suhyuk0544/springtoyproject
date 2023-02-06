@@ -46,6 +46,8 @@ public class WebController {
         JSONObject kakaoJson = new JSONObject(kakao);
         JSONObject response = new JSONObject();
 
+        log.info(kakaoJson.toString());
+
         URI uri = null;
         try {
             uri = apiService.Kakao(kakaoJson).build();
@@ -57,6 +59,7 @@ public class WebController {
                 .baseUrl("https://open.neis.go.kr")
                 .build();
 
+        log.info(uri.toString());
 
         String diet = webClient.get()
                 .uri(Objects.requireNonNull(uri).toString())
@@ -80,16 +83,26 @@ public class WebController {
 
         JSONObject request = apiService.FormatRequestKoGptJson((String) apiService.FormatKakaoBody(kakaoJson).get("sys_constant"));
 
+        WebClient webClient = WebClient.builder()
+                .baseUrl("https://api.openai.com")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE,MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer " + ApiKey.OPENAIAPIKEY.getKey())
+                .build();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add(HttpHeaders.AUTHORIZATION,"Bearer " + ApiKey.OPENAIAPIKEY.getKey());
+        String repString = webClient.post()
+                .uri("/v1/completions")
+                .bodyValue(request.toString())
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(
+                        httpStatus -> httpStatus != HttpStatus.OK,
+                        clientResponse -> clientResponse.createException()
+                                .flatMap(it -> Mono.error(new RuntimeException("code : " + clientResponse.statusCode()))))
+                .bodyToMono(String.class)
+                .onErrorResume(throwable -> Mono.error(new RuntimeException(throwable)))
+                .block();
 
-        HttpEntity<String> req = new HttpEntity<>(request.toString(),headers);
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> responseEntity = restTemplate.postForEntity("https://api.openai.com/v1/completions",req,String.class);
-
-        JSONObject response = new JSONObject(responseEntity.getBody());
+        JSONObject response = new JSONObject(repString);
 
         JSONArray jsonArray = response.getJSONArray("choices");
 
@@ -97,28 +110,11 @@ public class WebController {
 
         response = apiService.kakaoResponse(new StringBuilder((String) response.get("text")));
 
-//
-//        WebClient webClient = WebClient.builder()
-//                .baseUrl("https://api.openai.com/v1/completions")
-//                .defaultHeader(HttpHeaders.CONTENT_TYPE,MediaType.APPLICATION_JSON_VALUE)
-//                .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer " + ApiKey.OPENAIAPIKEY.getKey())
-//                .build();
-
-//        JSONObject jsonObject = webClient.post()
-//                .bodyValue(request)
-//                .retrieve()
-////                .onStatus(
-////                        httpStatus -> httpStatus != HttpStatus.OK,
-////                        clientResponse -> clientResponse.createException()
-////                                .flatMap(it -> Mono.error(new RuntimeException("code : " + clientResponse.statusCode()))))
-//                .bodyToMono(JSONObject.class)
-////                .onErrorResume(throwable -> Mono.error(new RuntimeException(throwable)))
-//
-//                .block();
-//        log.info(jsonObject.toString());
 
         return response.toString();
     }
+
+
 
 
     @RequestMapping(value = "/KakaoBot/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
