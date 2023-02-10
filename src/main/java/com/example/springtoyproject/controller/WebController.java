@@ -5,15 +5,14 @@ import com.example.springtoyproject.School.SchoolJpa;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
 import com.example.springtoyproject.controller.api.ApiService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 
 
@@ -23,9 +22,10 @@ import java.net.URISyntaxException;
 
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicReference;
 
 @RestController
 @Slf4j
@@ -75,13 +75,16 @@ public class WebController {
     }
 
     @RequestMapping(value = "/KakaoBot/ChatGpt",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public String Kakao(@RequestBody Map<String,Object> kakaoMap){
+    public Mono<String> Kakao(@RequestBody Map<String,Object> kakaoMap){
 
         JSONObject kakaoJson = new JSONObject(kakaoMap);
+
 
         log.info(kakaoJson.toString());
 
         JSONObject request = apiService.FormatRequestKoGptJson((String) apiService.FormatKakaoBody(kakaoJson).get("sys_constant"));
+
+//        JSONObject response = new JSONObject(apiService.ChatGptApi(request));
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://api.openai.com")
@@ -89,7 +92,7 @@ public class WebController {
                 .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer " + ApiKey.OPENAIAPIKEY.getKey())
                 .build();
 
-        String repString = webClient.post()
+        return webClient.post()
                 .uri("/v1/completions")
                 .bodyValue(request.toString())
                 .accept(MediaType.APPLICATION_JSON)
@@ -100,18 +103,19 @@ public class WebController {
                                 .flatMap(it -> Mono.error(new RuntimeException("code : " + clientResponse.statusCode()))))
                 .bodyToMono(String.class)
                 .onErrorResume(throwable -> Mono.error(new RuntimeException(throwable)))
-                .block();
+                .map(responseBody -> {
+                    JSONObject response = new JSONObject(responseBody);
 
-        JSONObject response = new JSONObject(repString);
+                    log.info(response.toString());
 
-        JSONArray jsonArray = response.getJSONArray("choices");
+                    JSONArray jsonArray = response.getJSONArray("choices");
 
-        response = jsonArray.getJSONObject(0);
+                    response = jsonArray.getJSONObject(0);
 
-        response = apiService.kakaoResponse(new StringBuilder((String) response.get("text")));
+                    response = apiService.kakaoResponse(new StringBuilder(apiService.deleteLineSeparator(response.getString("text"))));
 
-
-        return response.toString();
+                    return response.toString();
+                });
     }
 
 
@@ -190,14 +194,14 @@ public class WebController {
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://geolocation.apigw.ntruss.com")
                 .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
-                .defaultHeader("x-ncp-iam-access-key",AccessKey)
-                .defaultHeader("x-ncp-apigw-signature-v2",apiService.makeSignature(Long.toString(System.currentTimeMillis()),"GET","/geolocation/v2/geoLocation?ip=222.101.226.135&responseFormatType=json"))
+                .defaultHeader("x-ncp-iam-access-key",ApiKey.NcpAccessKey.getKey())
+                .defaultHeader("x-ncp-apigw-signature-v2",apiService.makeSignature(Long.toString(System.currentTimeMillis()),"GET","/geolocation/v2/geoLocation?ip="+ip+"&ext=t&responseFormatType=json"))
                 .build();
 
         JSONObject jsonObject = webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/geolocation/v2/geoLocation")
-                        .queryParam("ip","222.101.226.135")
+                        .queryParam("ip",ip)
                         .queryParam("ext","t")
                         .queryParam("responseFormatType","json")
                         .build()
@@ -206,7 +210,6 @@ public class WebController {
                 .bodyToMono(JSONObject.class)
                 .block();
 
-//        log.info((Objects.requireNonNull(jsonObject)));
 
         log.info(jsonObject.toString());
 

@@ -10,11 +10,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
+import reactor.core.publisher.Mono;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -116,6 +118,7 @@ public class ApiService {
     }
 
 
+
     public void ncp(String content){
 
         WebClient webClient = WebClient.builder()
@@ -149,6 +152,10 @@ public class ApiService {
 
         log.info(Objects.requireNonNull(jsonObject).toString());
 
+    }
+
+    public String deleteLineSeparator(String targetStr) {
+        return targetStr.replaceAll("(\r\n|\r|\n|\n\r)", "");
     }
 
     public JSONObject kakaoResponse(StringBuilder sb){
