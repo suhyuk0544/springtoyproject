@@ -41,12 +41,13 @@ public class WebController {
     private SchoolJpa schoolJpa;
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public String KakaoBotDiet(@RequestBody Map<String,Object> kakao){
+    public Mono<String> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
 
         JSONObject kakaoJson = new JSONObject(kakao);
-        JSONObject response = new JSONObject();
 
-        log.info(kakaoJson.toString());
+        WebClient webClient = WebClient.builder()
+                .baseUrl("https://open.neis.go.kr")
+                .build();
 
         URI uri = null;
         try {
@@ -55,23 +56,17 @@ public class WebController {
             e.printStackTrace();
         }
 
-        WebClient webClient = WebClient.builder()
-                .baseUrl("https://open.neis.go.kr")
-                .build();
-
-        log.info(uri.toString());
-
-        String diet = webClient.get()
+        return webClient.get()
                 .uri(Objects.requireNonNull(uri).toString())
                 .retrieve()
                 .bodyToMono(String.class)
-                .block();
+                .map(diet -> {
+                    StringBuilder sb = apiService.FormatDietJson(diet);
 
-        StringBuilder sb = apiService.FormatDietJson(diet);
+                    JSONObject response = apiService.kakaoResponse(sb);
 
-        response = apiService.kakaoResponse(sb);
-
-        return response.toString();
+                    return response.toString();
+                });
     }
 
     @RequestMapping(value = "/KakaoBot/ChatGpt",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
@@ -79,12 +74,7 @@ public class WebController {
 
         JSONObject kakaoJson = new JSONObject(kakaoMap);
 
-
-        log.info(kakaoJson.toString());
-
         JSONObject request = apiService.FormatRequestKoGptJson((String) apiService.FormatKakaoBody(kakaoJson).get("sys_constant"));
-
-//        JSONObject response = new JSONObject(apiService.ChatGptApi(request));
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://api.openai.com")
@@ -106,8 +96,6 @@ public class WebController {
                 .map(responseBody -> {
                     JSONObject response = new JSONObject(responseBody);
 
-                    log.info(response.toString());
-
                     JSONArray jsonArray = response.getJSONArray("choices");
 
                     response = jsonArray.getJSONObject(0);
@@ -117,8 +105,6 @@ public class WebController {
                     return response.toString();
                 });
     }
-
-
 
 
     @RequestMapping(value = "/KakaoBot/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
@@ -183,7 +169,7 @@ public class WebController {
     }
 
     @GetMapping("/main/geoLocation")
-    public String GeoLocation(HttpServletRequest request){
+    public Mono<String> GeoLocation(HttpServletRequest request){
 
         String ip = request.getHeader("X-FORWARDED-FOR");
 
@@ -198,7 +184,7 @@ public class WebController {
                 .defaultHeader("x-ncp-apigw-signature-v2",apiService.makeSignature(Long.toString(System.currentTimeMillis()),"GET","/geolocation/v2/geoLocation?ip="+ip+"&ext=t&responseFormatType=json"))
                 .build();
 
-        JSONObject jsonObject = webClient.get()
+        return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/geolocation/v2/geoLocation")
                         .queryParam("ip",ip)
@@ -208,12 +194,7 @@ public class WebController {
                 )
                 .retrieve()
                 .bodyToMono(JSONObject.class)
-                .block();
-
-
-        log.info(jsonObject.toString());
-
-        return jsonObject.toString();
+                .map(JSONObject::toString);
     }
 
 

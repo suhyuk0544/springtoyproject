@@ -56,7 +56,6 @@ public class ApiService {
         }catch (JSONException e){
 
             JSONObject date_period = new JSONObject((String) jsonObject.get("sys_date_period"));
-            log.info(date_period.toString());
 
             uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(date_period.getJSONObject("from")))
                     .addParameter("MLSV_TO_YMD",TimeFormat(date_period.getJSONObject("to")));
@@ -95,8 +94,6 @@ public class ApiService {
         JSONArray jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
         jsonObject = jsonArray.getJSONObject(1);
         jsonArray = jsonObject.getJSONArray("row");
-
-        
 
         for (int i = 0; i < jsonArray.length(); i++) {
 
