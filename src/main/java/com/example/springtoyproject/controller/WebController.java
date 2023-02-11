@@ -119,11 +119,11 @@ public class WebController {
                 .baseUrl("https://open.neis.go.kr")
                 .build();
 
-        JSONObject finalJsonObject = jsonObject;
+        JSONObject request = jsonObject;
         String schul_info = webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/hub/schoolInfo")
-                        .queryParam("SCHUL_NM", finalJsonObject.get("sys_constant"))
+                        .queryParam("SCHUL_NM", request.get("sys_constant"))
                         .queryParam("KEY", ApiKey.neiskey.getKey())
                         .queryParam("Type","json")
                         .queryParam("pIndex","1")
@@ -220,7 +220,6 @@ public class WebController {
                 .retrieve()
                 .bodyToMono(JSONObject.class)
                 .block();
-
 
     }
 
