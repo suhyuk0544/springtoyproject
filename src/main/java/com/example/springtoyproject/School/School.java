@@ -25,7 +25,7 @@ public class School {
     @Column
     private String SCHUL_NM;
 
-    @OneToMany(mappedBy = "school")
+    @OneToMany(mappedBy = "school",cascade = CascadeType.PERSIST)
     private List<UserInfo> userInfos;
 
     @Builder
@@ -36,7 +36,6 @@ public class School {
         this.ATPT_OFCDC_SC_CODE = ATPT_OFCDC_SC_CODE;
 
         this.SCHUL_NM = SCHUL_NM;
-
 
     }
 }

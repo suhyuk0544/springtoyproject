@@ -2,10 +2,14 @@ package com.example.springtoyproject.controller;
 
 import com.example.springtoyproject.School.School;
 import com.example.springtoyproject.School.SchoolJpa;
+import com.example.springtoyproject.UserInfo.Auth;
+import com.example.springtoyproject.UserInfo.UserInfo;
+import com.example.springtoyproject.UserInfo.UserInfoJpa;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
 import com.example.springtoyproject.controller.api.ApiService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +21,13 @@ import reactor.core.publisher.Mono;
 
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +42,9 @@ public class WebController {
     private UserService userService;
 
     @Autowired
+    private UserInfoJpa userInfoJpa;
+
+    @Autowired
     private ApiService apiService;
 
     @Autowired
@@ -44,6 +54,8 @@ public class WebController {
     public Mono<String> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
 
         JSONObject kakaoJson = new JSONObject(kakao);
+
+        log.info(kakaoJson.toString());
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
@@ -108,22 +120,20 @@ public class WebController {
 
 
     @RequestMapping(value = "/KakaoBot/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public String School(@RequestBody HashMap<String,Object> KakaoJson){
+    public Mono<String> School(@RequestBody HashMap<String,Object> KakaoJson, HttpSession httpSession){
 
         JSONObject kakaoJson = new JSONObject(KakaoJson);
 
-        JSONObject jsonObject = kakaoJson.getJSONObject("action");
-        jsonObject = jsonObject.getJSONObject("params");
+        JSONObject jsonObject = apiService.FormatKakaoBody(kakaoJson);
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
                 .build();
 
-        JSONObject request = jsonObject;
-        String schul_info = webClient.get()
+        return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/hub/schoolInfo")
-                        .queryParam("SCHUL_NM", request.get("sys_constant"))
+                        .queryParam("SCHUL_NM", jsonObject.get("sys_constant"))
                         .queryParam("KEY", ApiKey.neiskey.getKey())
                         .queryParam("Type","json")
                         .queryParam("pIndex","1")
@@ -131,39 +141,35 @@ public class WebController {
                 )
                 .retrieve()
                 .bodyToMono(String.class)
-                .block();
+                .map(school_info -> {
+                    JSONObject school = new JSONObject(school_info);
 
-        JSONObject school = new JSONObject(schul_info);
+                    JSONArray jsonArray = school.getJSONArray("schoolInfo");
 
-        JSONArray jsonArray = school.getJSONArray("schoolInfo");
+                    school = jsonArray.getJSONObject(1);
+                    jsonArray = school.getJSONArray("row");
+                    log.info(jsonArray.toString());
 
-        school = jsonArray.getJSONObject(1);
-        jsonArray = school.getJSONArray("row");
-        log.info(school.toString());
-        log.info(jsonArray.toString());
+                    httpSession.setAttribute("SchoolInfo",jsonArray);
 
-        jsonObject = jsonArray.getJSONObject(0);
-
-        if (schoolJpa.findBySD_SCHUL_CODE((String) jsonObject.get("SD_SCHUL_CODE")).isEmpty())
-            schoolJpa.save(School.builder()
-                    .ATPT_OFCDC_SC_CODE((String) jsonObject.get("ATPT_OFCDC_SC_CODE"))
-                    .SD_SCHUL_CODE((String) jsonObject.get("SD_SCHUL_CODE"))
-                    .SCHUL_NM((String) jsonObject.get("SCHUL_NM"))
-                    .build());
-
-        return "redirect:/main";
+                    return school.toString();
+                });
     }
 
-    @RequestMapping(value = "/KakaoBot/school/detail",method = {RequestMethod.GET})
-    public String SchoolDetail(@RequestBody HashMap<String,Object> kakao,@RequestParam(value = "ATPT_OFCDC_SC_CODE") String ATPT_OFCDC_SC_CODE,@RequestParam("SD_SCHUL_CODE") String SD_SCHUL_CODE,@RequestParam(value = "SCHUL_NM") String SCHUL_NM){
+    @RequestMapping(value = "/KakaoBot/school/detail",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
+    public String SchoolDetail(@RequestBody HashMap<String,Object> kakao,HttpSession httpSession){
 
+        log.info("===========================================detail===================================================");
 
-        if (schoolJpa.findBySD_SCHUL_CODE(SD_SCHUL_CODE).isEmpty())
-            schoolJpa.save(School.builder()
-                    .ATPT_OFCDC_SC_CODE(ATPT_OFCDC_SC_CODE)
-                    .SD_SCHUL_CODE(SD_SCHUL_CODE)
-                    .SCHUL_NM(SCHUL_NM)
-                    .build());
+        log.info(httpSession.getAttribute("SchoolInfo").toString());
+
+        JSONArray jsonArray = (JSONArray) httpSession.getAttribute("SchoolInfo");
+
+        JSONObject json = new JSONObject(kakao);
+
+        JSONObject kakaoJson = apiService.FormatKakaoBody(json);
+
+        apiService.NullCheck(apiService.SchoolSelect(kakaoJson.getString("sys_constant"),jsonArray),json.getJSONObject("userRequest").getJSONObject("user").getString("id"));
 
         return "";
     }
@@ -196,32 +202,63 @@ public class WebController {
                 .bodyToMono(JSONObject.class)
                 .map(JSONObject::toString);
     }
+    @GetMapping(value = "/oauth2")
+    public String Oauth2(){
+
+        SecureRandom random = new SecureRandom();
+        String state = new BigInteger(130, random).toString(32);
+
+        log.info("s");
+
+        URIBuilder uriBuilder = new URIBuilder();
 
 
-    @RequestMapping(value = "/oauth2/code/naver",method = {RequestMethod.GET,RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public void callback(@RequestParam(value = "code") String code,@RequestParam(value = "state") String state,@RequestParam(value = "error_description") String error_description){
+        uriBuilder.setPath("/oauth/2.0/authorize")
+                .setParameter("response_type","code")
+                .setParameter("client_id", ApiKey.OPENBANKID.getKey())
+                .setParameter("redirect_uri","http://localhost:8080/login/oauth2/code/openbank")
+                .setParameter("scope","login inquiry")
+                .setParameter("state",state)
+                .setParameter("auth_type","1");
 
-        WebClient webClient = WebClient.builder()
-                .baseUrl("https://nid.naver.com")
-                .defaultHeader(MediaType.APPLICATION_JSON_VALUE)
+        log.info(uriBuilder.toString());
+
+        return "redirect:"+uriBuilder;
+    }
+
+
+    @RequestMapping(value = "/oauth2/code/{registrationId}",method = {RequestMethod.GET,RequestMethod.POST},produces = "application/json")
+    public String Oauth1Login(@PathVariable String registrationId, @RequestParam(value = "code") String code, @RequestParam(value = "state") String state){
+
+        log.info("callback");
+
+//        ClientRegistration clientRegistrations = inMemoryClientRegistrationRepository.findByRegistrationId(registrationId);
+
+        WebClient webclient = WebClient.builder()
+                .baseUrl("https://openapi.openbanking.or.kr")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
 
 
-        JSONObject object = webClient.get()
+        JSONObject response = webclient.post()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/oauth2.0/token")
+                        .path("/oauth/2.0/token")
+                        .queryParam("client_id",ApiKey.OPENBANKID.getKey())
+                        .queryParam("client_secret",ApiKey.OPENBANKSECRET.getKey())
                         .queryParam("grant_type", "authorization_code")
-                        .queryParam("client_id", " NQj0cmSwEsYbB8ajFwfe")
-                        .queryParam("client_secret", "ZKobACSyRi")
                         .queryParam("code", code)
-                        .queryParam("state", state)
-                        .build()
-                )
+                        .build())
                 .retrieve()
                 .bodyToMono(JSONObject.class)
                 .block();
 
+//        OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, (String) Objects.requireNonNull(response).get("access_token"),null,null,null);
+
+        log.info("{}",response.get("expires_in"));
+
+        return "redirect:/main";
     }
+
 
 
 }

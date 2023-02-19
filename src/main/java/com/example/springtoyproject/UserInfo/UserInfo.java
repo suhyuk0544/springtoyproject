@@ -19,7 +19,7 @@ public class UserInfo {
 
     @Id
     @Column(nullable = false)
-    private String id;
+    private String userid;
 
     @Column(nullable = false)
     @JsonIgnore
@@ -30,9 +30,9 @@ public class UserInfo {
     private School school;
 
     @Builder
-    public UserInfo(String id,Auth auth,School school) {
+    public UserInfo(String userid,Auth auth,School school) {
 
-        this.id = id;
+        this.userid = userid;
 
         this.auth = auth;
 

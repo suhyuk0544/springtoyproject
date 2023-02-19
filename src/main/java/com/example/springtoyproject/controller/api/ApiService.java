@@ -1,5 +1,10 @@
 package com.example.springtoyproject.controller.api;
 
+import com.example.springtoyproject.School.School;
+import com.example.springtoyproject.School.SchoolJpa;
+import com.example.springtoyproject.UserInfo.Auth;
+import com.example.springtoyproject.UserInfo.UserInfo;
+import com.example.springtoyproject.UserInfo.UserInfoJpa;
 import com.example.springtoyproject.config.ApiKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
@@ -29,11 +35,17 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ApiService {
+
+    private final UserInfoJpa userInfoJpa;
+
+    private final SchoolJpa schoolJpa;
+
 
     public URIBuilder Kakao(JSONObject KakaoObject) {
 
@@ -62,6 +74,34 @@ public class ApiService {
 
             return uriBuilder;
         }
+    }
+
+    @Transactional
+    public void NullCheck(JSONObject jsonObject,String id){
+
+        School school = School.builder()
+                .ATPT_OFCDC_SC_CODE(jsonObject.getString("ATPT_OFCDC_SC_CODE"))
+                .SD_SCHUL_CODE(jsonObject.getString("SD_SCHUL_CODE"))
+                .SCHUL_NM(jsonObject.getString("SCHUL_NM"))
+                .build();
+
+        if (!schoolJpa.existsBySD_SCHUL_CODE(jsonObject.getString("SD_SCHUL_CODE")))
+            schoolJpa.save(school);
+
+        Optional<UserInfo> userInfo = userInfoJpa.findById(id);
+
+
+        userInfo.ifPresentOrElse(user -> {
+            user = UserInfo.builder()
+                    .school(school)
+                    .build();
+        },() -> {
+            userInfoJpa.save(UserInfo.builder()
+                    .userid(id)
+                    .school(school)
+                    .auth(Auth.ROLE_USER)
+                    .build());
+        });
     }
 
     public JSONObject FormatRequestKoGptJson(String text){
@@ -112,6 +152,19 @@ public class ApiService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
         return now.format(formatter);
+    }
+
+    public JSONObject SchoolSelect(String SCHUL_NM,JSONArray jsonArray){
+
+        JSONObject jsonObject = new JSONObject();
+
+        for (int i = 0; i < jsonArray.length(); i++) {
+            jsonObject = jsonArray.getJSONObject(i);
+            if (jsonObject.getString("SCHUL_NM").equals(SCHUL_NM))
+                break;
+        }
+
+        return jsonObject;
     }
 
 
