@@ -8,12 +8,14 @@ import com.example.springtoyproject.UserInfo.UserInfoJpa;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
 import com.example.springtoyproject.controller.api.ApiService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.Disposable;
@@ -25,17 +27,16 @@ import javax.servlet.http.HttpSession;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
-
-
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+
 
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class WebController {
 
     @Autowired
@@ -49,6 +50,7 @@ public class WebController {
 
     @Autowired
     private SchoolJpa schoolJpa;
+
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
@@ -80,6 +82,36 @@ public class WebController {
                     return response.toString();
                 });
     }
+
+    @GetMapping(value = "/sans")
+    public String My(){
+
+        WebClient webClient = WebClient.builder()
+                .baseUrl("https://open.neis.go.kr")
+                .build();
+
+
+        try {
+            URI uri = apiService.Diet(LocalDate.now()).build();
+
+            log.info(uri.toString());
+
+            String diet = webClient.get()
+                    .uri(Objects.requireNonNull(uri).toString())
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            log.info(diet);
+
+            apiService.ncp(apiService.FormatDietJson(diet));
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
+        return "good";
+    }
+
 
     @RequestMapping(value = "/KakaoBot/ChatGpt",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> Kakao(@RequestBody Map<String,Object> kakaoMap){
@@ -215,7 +247,7 @@ public class WebController {
 
         uriBuilder.setPath("/oauth/2.0/authorize")
                 .setParameter("response_type","code")
-                .setParameter("client_id", ApiKey.OPENBANKID.getKey())
+//                .setParameter("client_id", ApiKey.OPENBANKID.getKey())
                 .setParameter("redirect_uri","http://localhost:8080/login/oauth2/code/openbank")
                 .setParameter("scope","login inquiry")
                 .setParameter("state",state)
@@ -243,8 +275,8 @@ public class WebController {
         JSONObject response = webclient.post()
                 .uri(uriBuilder -> uriBuilder
                         .path("/oauth/2.0/token")
-                        .queryParam("client_id",ApiKey.OPENBANKID.getKey())
-                        .queryParam("client_secret",ApiKey.OPENBANKSECRET.getKey())
+//                        .queryParam("client_id",ApiKey.OPENBANKID.getKey())
+//                        .queryParam("client_secret",ApiKey.OPENBANKSECRET.getKey())
                         .queryParam("grant_type", "authorization_code")
                         .queryParam("code", code)
                         .build())

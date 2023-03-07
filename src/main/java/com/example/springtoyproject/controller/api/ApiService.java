@@ -15,23 +15,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriBuilder;
-import reactor.core.publisher.Mono;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
@@ -76,6 +70,21 @@ public class ApiService {
         }
     }
 
+    public URIBuilder Diet(LocalDate localDate) {
+
+        log.info(localDate.toString());
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        return new URIBuilder().setPath("/hub/mealServiceDietInfo")
+                .addParameter("KEY",ApiKey.neiskey.getKey())
+                .addParameter("Type","json")
+                .addParameter("pIndex","1")
+                .addParameter("ATPT_OFCDC_SC_CODE","J10")
+                .addParameter("SD_SCHUL_CODE","7530581")
+                .addParameter("MLSV_YMD",localDate.format(formatter));
+    }
+
     @Transactional
     public void NullCheck(JSONObject jsonObject,String id){
 
@@ -85,7 +94,7 @@ public class ApiService {
                 .SCHUL_NM(jsonObject.getString("SCHUL_NM"))
                 .build();
 
-        if (!schoolJpa.existsBySD_SCHUL_CODE(jsonObject.getString("SD_SCHUL_CODE")))
+        if (schoolJpa.findBySD_SCHUL_CODE(jsonObject.getString("SD_SCHUL_CODE")).isEmpty())
             schoolJpa.save(school);
 
         Optional<UserInfo> userInfo = userInfoJpa.findById(id);
@@ -169,7 +178,7 @@ public class ApiService {
 
 
 
-    public void ncp(String content){
+    public void ncp(StringBuilder content){
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://sens.apigw.ntruss.com")
