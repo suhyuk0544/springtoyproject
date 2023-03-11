@@ -8,12 +8,14 @@ import com.example.springtoyproject.UserInfo.UserInfoJpa;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
 import com.example.springtoyproject.controller.api.ApiService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.Disposable;
@@ -28,6 +30,7 @@ import java.net.URISyntaxException;
 
 
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,19 +39,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class WebController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private UserInfoJpa userInfoJpa;
+    private final UserInfoJpa userInfoJpa;
 
-    @Autowired
-    private ApiService apiService;
+    private final ApiService apiService;
 
-    @Autowired
-    private SchoolJpa schoolJpa;
+    private final SchoolJpa schoolJpa;
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
@@ -79,6 +79,36 @@ public class WebController {
 
                     return response.toString();
                 });
+    }
+
+    @Scheduled(cron = "0 0 9 * * 1-5",zone = "Asia/Seoul")
+    public void MyDiet(){
+
+        WebClient webClient = WebClient.builder()
+                .baseUrl("https://open.neis.go.kr")
+                .build();
+
+        try {
+            URI uri = apiService.Kakao(LocalDate.now()).build();
+
+            webClient.get()
+                    .uri(Objects.requireNonNull(uri).toString())
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .subscribe(diet -> {
+
+                        log.info(diet);
+
+                        StringBuilder sb = apiService.FormatDietJson(diet);
+
+                        log.info(sb.toString());
+
+                        apiService.ncp(sb.toString());
+                    });
+
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
     }
 
     @RequestMapping(value = "/KakaoBot/ChatGpt",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
@@ -177,7 +207,7 @@ public class WebController {
     @GetMapping("/main/geoLocation")
     public Mono<String> GeoLocation(HttpServletRequest request){
 
-        String ip = request.getHeader("X-FORWARDED-FOR");
+        String ip = request.getRemoteAddr();
 
         String AccessKey = "XqF575b0EH4sCOgkPxJh";
 
@@ -215,7 +245,7 @@ public class WebController {
 
         uriBuilder.setPath("/oauth/2.0/authorize")
                 .setParameter("response_type","code")
-                .setParameter("client_id", ApiKey.OPENBANKID.getKey())
+//                .setParameter("client_id", ApiKey..getKey())
                 .setParameter("redirect_uri","http://localhost:8080/login/oauth2/code/openbank")
                 .setParameter("scope","login inquiry")
                 .setParameter("state",state)
@@ -243,8 +273,8 @@ public class WebController {
         JSONObject response = webclient.post()
                 .uri(uriBuilder -> uriBuilder
                         .path("/oauth/2.0/token")
-                        .queryParam("client_id",ApiKey.OPENBANKID.getKey())
-                        .queryParam("client_secret",ApiKey.OPENBANKSECRET.getKey())
+//                        .queryParam("client_id",ApiKey.OPENBANKID.getKey())
+//                        .queryParam("client_secret",ApiKey..getKey())
                         .queryParam("grant_type", "authorization_code")
                         .queryParam("code", code)
                         .build())

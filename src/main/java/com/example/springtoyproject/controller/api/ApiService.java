@@ -15,23 +15,20 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.Nullable;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
@@ -76,6 +73,21 @@ public class ApiService {
         }
     }
 
+    public URIBuilder Kakao(LocalDate now) {
+
+        log.info(now.toString());
+        log.info(TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+        return new URIBuilder()
+                .setPath("/hub/mealServiceDietInfo")
+                .addParameter("KEY", ApiKey.neiskey.getKey())
+                .addParameter("Type","json")
+                .addParameter("pIndex","1")
+                .addParameter("ATPT_OFCDC_SC_CODE","J10")
+                .addParameter("SD_SCHUL_CODE","7530581")
+                .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+    }
+
     @Transactional
     public void NullCheck(JSONObject jsonObject,String id){
 
@@ -85,23 +97,21 @@ public class ApiService {
                 .SCHUL_NM(jsonObject.getString("SCHUL_NM"))
                 .build();
 
-        if (!schoolJpa.existsBySD_SCHUL_CODE(jsonObject.getString("SD_SCHUL_CODE")))
+        if (schoolJpa.findBySD_SCHUL_CODE(jsonObject.getString("SD_SCHUL_CODE")).isEmpty())
             schoolJpa.save(school);
 
         Optional<UserInfo> userInfo = userInfoJpa.findById(id);
 
 
-        userInfo.ifPresentOrElse(user -> {
-            user = UserInfo.builder()
-                    .school(school)
-                    .build();
-        },() -> {
-            userInfoJpa.save(UserInfo.builder()
-                    .userid(id)
-                    .school(school)
-                    .auth(Auth.ROLE_USER)
-                    .build());
-        });
+        userInfo.ifPresentOrElse(user ->
+                        user = UserInfo.builder()
+                                .school(school)
+                                .build()
+                ,() -> userInfoJpa.save(UserInfo.builder()
+                        .userid(id)
+                        .school(school)
+                        .auth(Auth.ROLE_USER)
+                        .build()));
     }
 
     public JSONObject FormatRequestKoGptJson(String text){
@@ -126,14 +136,18 @@ public class ApiService {
         return jsonObject;
     }
 
+
     public StringBuilder FormatDietJson(String diet){
 
         StringBuilder sb = new StringBuilder();
 
         JSONObject jsonObject = new JSONObject(diet);
+
+        log.info(jsonObject.toString());
         JSONArray jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
         jsonObject = jsonArray.getJSONObject(1);
         jsonArray = jsonObject.getJSONArray("row");
+
 
         for (int i = 0; i < jsonArray.length(); i++) {
 
@@ -154,6 +168,14 @@ public class ApiService {
         return now.format(formatter);
     }
 
+    public String TimeFormat(LocalDate localDate,DateTimeFormatter dateTimeFormatter){
+
+        LocalDate now = LocalDate.parse(localDate.toString(),dateTimeFormatter);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        return now.format(formatter);
+    }
+
     public JSONObject SchoolSelect(String SCHUL_NM,JSONArray jsonArray){
 
         JSONObject jsonObject = new JSONObject();
@@ -167,13 +189,18 @@ public class ApiService {
         return jsonObject;
     }
 
+    @Scheduled(cron = "0 41 16 * * 1-6",zone = "Asia/Seoul")
+    public void test(){
 
+        log.info("hi");
+
+    }
 
     public void ncp(String content){
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://sens.apigw.ntruss.com")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_UTF8_VALUE)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
                 .defaultHeader("x-ncp-iam-access-key", ApiKey.NcpAccessKey.getKey())
                 .defaultHeader("x-ncp-apigw-signature-v2",makeSignature(Long.toString(System.currentTimeMillis()),"POST","/sms/v2/services/"+ApiKey.serviceId.getKey()+"/messages"))
@@ -193,15 +220,12 @@ public class ApiService {
 
         log.info(data.toString());
 
-        JSONObject jsonObject = webClient.post()
+        webClient.post()
                 .uri("/sms/v2/services/"+ApiKey.serviceId.getKey()+"/messages")
-                .bodyValue(data)
+                .bodyValue(data.toString())
                 .retrieve()
-                .bodyToMono(JSONObject.class)
-                .block();
-
-        log.info(Objects.requireNonNull(jsonObject).toString());
-
+                .bodyToMono(String.class)
+                .subscribe(log::info);
     }
 
     public String deleteLineSeparator(String targetStr) {
@@ -223,9 +247,11 @@ public class ApiService {
     }
 
 
-    public StringBuilder MakeFormat(String content,String date){
+    public StringBuilder MakeFormat(String content,@Nullable String date){
         StringBuilder sb = new StringBuilder();
-        sb.append(date).append("\n");
+
+//        if (date != null)
+//            sb.append(date).append("\n");
 
         if (content == null)
             return sb.append("급식이 없습니다");
@@ -235,14 +261,10 @@ public class ApiService {
         for (int i = 0; i < content.length(); i++) {
             String q = String.valueOf(content.charAt(i));
             if (!q.equals(" ")) {
+                //                    sb.append(" ");
                 if (!q.equals("(") && r) {
                     sb.append(q);
-                } else if (q.equals(")")) {
-                    r = true;
-//                    sb.append(" ");
-                } else {
-                    r = false;
-                }
+                } else r = q.equals(")");
             }else if (!w.equals(" ")){
                 sb.append("\n");
             }
@@ -267,7 +289,6 @@ public class ApiService {
                     .append(ApiKey.NcpAccessKey.getKey())
                     .toString();
 
-            log.info(message);
 
             SecretKeySpec signingKey = new SecretKeySpec(ApiKey.NcpSecretKey.getKey().getBytes(StandardCharsets.UTF_8),"HmacSHA256");
             Mac mac = Mac.getInstance("HmacSHA256");
@@ -276,7 +297,6 @@ public class ApiService {
 
             encodeBase64String = Base64.encodeBase64String(rawHmac);
 
-            log.info(encodeBase64String);
 
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             e.printStackTrace();

@@ -6,8 +6,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.math.BigInteger;
 
+@EnableScheduling
 @SpringBootApplication
-//@EnableScheduling
 public class SpringtoyprojectApplication {
 
     public static void main(String[] args) {
