@@ -85,7 +85,8 @@ public class ApiService {
                 .addParameter("pIndex","1")
                 .addParameter("ATPT_OFCDC_SC_CODE","J10")
                 .addParameter("SD_SCHUL_CODE","7530581")
-                .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+//                .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                .addParameter("MLSV_YMD","20230309");
     }
 
     @Transactional
