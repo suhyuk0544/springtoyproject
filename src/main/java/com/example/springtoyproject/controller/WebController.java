@@ -1,24 +1,18 @@
 package com.example.springtoyproject.controller;
 
-import com.example.springtoyproject.School.School;
 import com.example.springtoyproject.School.SchoolJpa;
-import com.example.springtoyproject.UserInfo.Auth;
-import com.example.springtoyproject.UserInfo.UserInfo;
 import com.example.springtoyproject.UserInfo.UserInfoJpa;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
-import com.example.springtoyproject.controller.api.ApiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 
 
@@ -32,10 +26,8 @@ import java.net.URISyntaxException;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 
 @RestController
 @Slf4j
@@ -94,17 +86,14 @@ public class WebController {
             webClient.get()
                     .uri(Objects.requireNonNull(uri).toString())
                     .retrieve()
+                    .onStatus(
+                            httpStatus -> httpStatus != HttpStatus.OK,
+                            clientResponse -> clientResponse.createException()
+                                    .flatMap(it -> Mono.error(new RuntimeException()))
+                    )
                     .bodyToMono(String.class)
-                    .subscribe(diet -> {
-
-                        log.info(diet);
-
-                        StringBuilder sb = apiService.FormatDietJson(diet);
-
-                        log.info(sb.toString());
-
-                        apiService.ncp(sb.toString());
-                    });
+                    .onErrorResume(throwable -> Mono.error(new RuntimeException(throwable)))
+                    .subscribe(diet -> apiService.ncp(apiService.FormatDietJson(diet)));
 
         } catch (URISyntaxException e) {
             e.printStackTrace();

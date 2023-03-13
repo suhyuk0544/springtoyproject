@@ -2,15 +2,14 @@ package com.example.springtoyproject.School;
 
 
 import com.example.springtoyproject.UserInfo.UserInfo;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.List;
 
-@Data
 @Entity
+@Getter
+@ToString
 @NoArgsConstructor
 public class School {
 

@@ -30,5 +30,4 @@ public class UserService {
 
     private UserInfoJpa userInfoJpa;
 
-
 }

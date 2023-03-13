@@ -1,4 +1,4 @@
-package com.example.springtoyproject.controller.api;
+package com.example.springtoyproject.controller;
 
 import com.example.springtoyproject.School.School;
 import com.example.springtoyproject.School.SchoolJpa;
@@ -37,7 +37,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ApiService {
+class ApiService {
 
     private final UserInfoJpa userInfoJpa;
 
@@ -190,14 +190,9 @@ public class ApiService {
         return jsonObject;
     }
 
-    @Scheduled(cron = "0 41 16 * * 1-6",zone = "Asia/Seoul")
-    public void test(){
 
-        log.info("hi");
 
-    }
-
-    public void ncp(String content){
+    public void ncp(StringBuilder content){
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://sens.apigw.ntruss.com")
