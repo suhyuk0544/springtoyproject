@@ -42,6 +42,8 @@ public class WebController {
 
     private final SchoolJpa schoolJpa;
 
+    private WebClient webClient;
+
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
 
@@ -49,51 +51,30 @@ public class WebController {
 
         log.info(kakaoJson.toString());
 
-        WebClient webClient = WebClient.builder()
-                .baseUrl("https://open.neis.go.kr")
-                .build();
-
         URI uri = null;
         try {
             uri = apiService.Kakao(kakaoJson).build();
+            log.info(uri.toString());
+
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
 
-        return webClient.get()
-                .uri(Objects.requireNonNull(uri).toString())
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(diet -> {
-                    StringBuilder sb = apiService.FormatDietJson(diet);
+        return apiService.NeisApi(Objects.requireNonNull(uri).toString()).map(diet -> {
+            JSONObject response = apiService.kakaoResponse(diet);
 
-                    JSONObject response = apiService.kakaoResponse(sb);
-
-                    return response.toString();
-                });
+            return response.toString();
+        });
     }
 
     @Scheduled(cron = "0 0 9 * * 1-5",zone = "Asia/Seoul")
     public void MyDiet(){
 
-        WebClient webClient = WebClient.builder()
-                .baseUrl("https://open.neis.go.kr")
-                .build();
-
         try {
             URI uri = apiService.Kakao(LocalDate.now()).build();
 
-            webClient.get()
-                    .uri(Objects.requireNonNull(uri).toString())
-                    .retrieve()
-                    .onStatus(
-                            httpStatus -> httpStatus != HttpStatus.OK,
-                            clientResponse -> clientResponse.createException()
-                                    .flatMap(it -> Mono.error(new RuntimeException()))
-                    )
-                    .bodyToMono(String.class)
-                    .onErrorResume(throwable -> Mono.error(new RuntimeException(throwable)))
-                    .subscribe(diet -> apiService.ncp(apiService.FormatDietJson(diet)));
+            apiService.NeisApi(uri.toString())
+                    .subscribe(apiService::ncp);
 
         } catch (URISyntaxException e) {
             e.printStackTrace();
@@ -131,7 +112,7 @@ public class WebController {
 
                     response = jsonArray.getJSONObject(0);
 
-                    response = apiService.kakaoResponse(new StringBuilder(apiService.deleteLineSeparator(response.getString("text"))));
+                    response = apiService.kakaoResponse(apiService.deleteLineSeparator(response.getString("text")));
 
                     return response.toString();
                 });

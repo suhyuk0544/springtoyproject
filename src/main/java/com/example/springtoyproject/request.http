@@ -121,3 +121,45 @@ Content-Type: application/json
   }
 }
 
+###
+
+POST http://localhost:8080/KakaoBot/diet
+Content-Type: application/json
+
+{
+  "intent": {
+    "id": "gmucdqb8c45fnpd0rr3krhdr",
+    "name": "블록 이름"
+  },
+  "userRequest": {
+    "timezone": "Asia/Seoul",
+    "params": {
+      "ignoreMe": "true"
+    },
+    "block": {
+      "id": "gmucdqb8c45fnpd0rr3krhdr",
+      "name": "블록 이름"
+    },
+    "utterance": "발화 내용",
+    "lang": null,
+    "user": {
+      "id": "512369",
+      "type": "accountId",
+      "properties": {}
+    }
+  },
+  "bot": {
+    "id": "63ef45221727873452d80b45",
+    "name": "봇 이름"
+  },
+  "action": {
+    "name": "g7qd4wfygz",
+    "clientExtra": null,
+    "params": {
+      "sys_constant": "양평고",
+      "sys_date": "2023-03-14"
+    },
+    "id": "1vgk5w711t6l3sr6nixthi7c",
+    "detailParams": {}
+  }
+}

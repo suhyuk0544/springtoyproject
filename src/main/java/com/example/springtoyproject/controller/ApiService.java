@@ -15,6 +15,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,8 @@ class ApiService {
 
     private final SchoolJpa schoolJpa;
 
+    private WebClient webClient;
+
 
     public URIBuilder Kakao(JSONObject KakaoObject) {
 
@@ -56,21 +59,42 @@ class ApiService {
 
         JSONObject jsonObject = FormatKakaoBody(KakaoObject);
 
-        try {
+//        try {
 
-            uriBuilder.addParameter("MLSV_YMD",TimeFormat(new JSONObject((String) jsonObject.get("sys_date"))));
+            log.info((String) jsonObject.get("sys_date"));
 
-            return uriBuilder;
-
-        }catch (JSONException e){
-
-            JSONObject date_period = new JSONObject((String) jsonObject.get("sys_date_period"));
-
-            uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(date_period.getJSONObject("from")))
-                    .addParameter("MLSV_TO_YMD",TimeFormat(date_period.getJSONObject("to")));
+            uriBuilder.addParameter("MLSV_YMD", TimeFormat(new JSONObject((String) jsonObject.get("sys_date"))));
 
             return uriBuilder;
-        }
+
+//        }catch (JSONException e){ // 고쳐야 됨 흐름상 예외 처리는 부적절
+
+//            JSONObject date_period = new JSONObject((String) jsonObject.get("sys_date_period"));
+//
+//            uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(date_period.getJSONObject("from")))
+//                    .addParameter("MLSV_TO_YMD",TimeFormat(date_period.getJSONObject("to")));
+//
+//            return uriBuilder;
+//        }
+    }
+
+    public Mono<String> NeisApi(String uri){
+
+        webClient = WebClient.builder()
+                .baseUrl("https://open.neis.go.kr")
+                .build();
+
+        return webClient.get()
+                .uri(Objects.requireNonNull(uri))
+                .retrieve()
+                .onStatus(
+                        httpStatus -> httpStatus != HttpStatus.OK,
+                        clientResponse -> clientResponse.createException()
+                                .flatMap(it -> Mono.error(new RuntimeException()))
+                )
+                .bodyToMono(String.class)
+                .onErrorResume(throwable -> Mono.error(new RuntimeException(throwable)))
+                .map(this::FormatDietJson);
     }
 
     public URIBuilder Kakao(LocalDate now) {
@@ -85,8 +109,8 @@ class ApiService {
                 .addParameter("pIndex","1")
                 .addParameter("ATPT_OFCDC_SC_CODE","J10")
                 .addParameter("SD_SCHUL_CODE","7530581")
-//                .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                .addParameter("MLSV_YMD","20230309");
+                .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+//                .addParameter("MLSV_YMD","20230309");
     }
 
     @Transactional
@@ -138,7 +162,7 @@ class ApiService {
     }
 
 
-    public StringBuilder FormatDietJson(String diet){
+    public String FormatDietJson(String diet){
 
         StringBuilder sb = new StringBuilder();
 
@@ -157,13 +181,15 @@ class ApiService {
             sb.append(MakeFormat(((String) jsonObject.get("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()));
         }
 
-        return sb;
+        return sb.toString();
     }
 
 
     public String TimeFormat(JSONObject jsonObject){
 
-        LocalDate now = LocalDate.parse((String)jsonObject.get("date"), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        log.info(jsonObject.get("date").toString());
+
+        LocalDate now = LocalDate.parse((String) jsonObject.get("date"), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
         return now.format(formatter);
@@ -192,7 +218,7 @@ class ApiService {
 
 
 
-    public void ncp(StringBuilder content){
+    public void ncp(String content){
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://sens.apigw.ntruss.com")
@@ -228,13 +254,13 @@ class ApiService {
         return targetStr.replaceAll("(\r\n|\r|\n|\n\r)", "");
     }
 
-    public JSONObject kakaoResponse(StringBuilder sb){
+    public JSONObject kakaoResponse(String content){
 
         JSONObject jsonObject = new JSONObject();
         JSONObject Text = new JSONObject();
         JSONObject outputs = new JSONObject();
 
-        Text.put("simpleText",new JSONObject().put("text",sb));
+        Text.put("simpleText",new JSONObject().put("text",content));
         outputs.put("outputs",new JSONArray().put(Text));
         jsonObject.put("version","2.0");
         jsonObject.put("template",outputs);
