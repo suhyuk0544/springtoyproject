@@ -52,30 +52,30 @@ class ApiService {
         URIBuilder uriBuilder = new URIBuilder();
         uriBuilder.setPath("/hub/mealServiceDietInfo")
                 .addParameter("KEY", ApiKey.neiskey.getKey())
-                .addParameter("Type","json")
-                .addParameter("pIndex","1")
-                .addParameter("ATPT_OFCDC_SC_CODE","J10")
-                .addParameter("SD_SCHUL_CODE","7530581");
+                .addParameter("Type", "json")
+                .addParameter("pIndex", "1")
+                .addParameter("ATPT_OFCDC_SC_CODE", "J10")
+                .addParameter("SD_SCHUL_CODE", "7530581");
 
         JSONObject jsonObject = FormatKakaoBody(KakaoObject);
 
-//        try {
 
-            log.info((String) jsonObject.get("sys_date"));
+        if (jsonObject.has("sys_date")){
+
+            log.info(jsonObject.toString());
+            log.info(jsonObject.getJSONObject("sys_date").toString());
 
             uriBuilder.addParameter("MLSV_YMD", TimeFormat(new JSONObject((String) jsonObject.get("sys_date"))));
 
-            return uriBuilder;
+        }else {
 
-//        }catch (JSONException e){ // 고쳐야 됨 흐름상 예외 처리는 부적절
+            JSONObject date_period = new JSONObject((String) jsonObject.get("sys_date_period"));
 
-//            JSONObject date_period = new JSONObject((String) jsonObject.get("sys_date_period"));
-//
-//            uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(date_period.getJSONObject("from")))
-//                    .addParameter("MLSV_TO_YMD",TimeFormat(date_period.getJSONObject("to")));
-//
-//            return uriBuilder;
-//        }
+            uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(date_period.getJSONObject("from")))
+                    .addParameter("MLSV_TO_YMD",TimeFormat(date_period.getJSONObject("to")));
+
+        }
+        return uriBuilder;
     }
 
     public Mono<String> NeisApi(String uri){

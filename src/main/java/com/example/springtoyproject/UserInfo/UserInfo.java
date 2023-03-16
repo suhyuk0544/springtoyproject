@@ -18,8 +18,6 @@ import java.util.Objects;
 @NoArgsConstructor
 public class UserInfo {
 
-
-
     @Id
     @Column(nullable = false)
     private String userid;

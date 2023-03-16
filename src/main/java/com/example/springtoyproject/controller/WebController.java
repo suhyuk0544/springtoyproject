@@ -60,16 +60,16 @@ public class WebController {
             e.printStackTrace();
         }
 
-        return apiService.NeisApi(Objects.requireNonNull(uri).toString()).map(diet -> {
-            JSONObject response = apiService.kakaoResponse(diet);
+        return apiService.NeisApi(Objects.requireNonNull(uri).toString())
+                .map(diet -> {
+                    JSONObject response = apiService.kakaoResponse(diet);
 
-            return response.toString();
-        });
+                    return response.toString();
+                });
     }
 
     @Scheduled(cron = "0 0 9 * * 1-5",zone = "Asia/Seoul")
     public void MyDiet(){
-
         try {
             URI uri = apiService.Kakao(LocalDate.now()).build();
 
