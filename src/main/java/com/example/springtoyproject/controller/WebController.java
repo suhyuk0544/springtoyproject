@@ -42,7 +42,7 @@ public class WebController {
 
     private final SchoolJpa schoolJpa;
 
-    private WebClient webClient;
+    private static WebClient webClient;
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<String> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
@@ -88,7 +88,7 @@ public class WebController {
 
         JSONObject request = apiService.FormatRequestKoGptJson((String) apiService.FormatKakaoBody(kakaoJson).get("sys_constant"));
 
-        WebClient webClient = WebClient.builder()
+        webClient = WebClient.builder()
                 .baseUrl("https://api.openai.com")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE,MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer " + ApiKey.OPENAIAPIKEY.getKey())
@@ -126,7 +126,7 @@ public class WebController {
 
         JSONObject jsonObject = apiService.FormatKakaoBody(kakaoJson);
 
-        WebClient webClient = WebClient.builder()
+        webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
                 .build();
 
@@ -175,7 +175,7 @@ public class WebController {
     }
 
     @GetMapping("/main/geoLocation")
-    public Mono<String> GeoLocation(HttpServletRequest request){
+    public Mono<JSONObject> GeoLocation(HttpServletRequest request){
 
         String ip = request.getRemoteAddr();
 
@@ -183,7 +183,7 @@ public class WebController {
 
         log.info(request.getRemoteAddr());
 
-        WebClient webClient = WebClient.builder()
+        webClient = WebClient.builder()
                 .baseUrl("https://geolocation.apigw.ntruss.com")
                 .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
                 .defaultHeader("x-ncp-iam-access-key",ApiKey.NcpAccessKey.getKey())
@@ -199,8 +199,8 @@ public class WebController {
                         .build()
                 )
                 .retrieve()
-                .bodyToMono(JSONObject.class)
-                .map(JSONObject::toString);
+                .bodyToMono(String.class)
+                .map(JSONObject::new);
     }
     @GetMapping(value = "/oauth2")
     public String Oauth2(){

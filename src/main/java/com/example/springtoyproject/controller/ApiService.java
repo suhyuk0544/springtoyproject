@@ -44,8 +44,7 @@ class ApiService {
 
     private final SchoolJpa schoolJpa;
 
-    private WebClient webClient;
-
+    private static WebClient webClient;
 
     public URIBuilder Kakao(JSONObject KakaoObject) {
 
@@ -169,16 +168,25 @@ class ApiService {
         JSONObject jsonObject = new JSONObject(diet);
 
         log.info(jsonObject.toString());
-        JSONArray jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
-        jsonObject = jsonArray.getJSONObject(1);
-        jsonArray = jsonObject.getJSONArray("row");
 
+        JSONArray jsonArray = null;
 
-        for (int i = 0; i < jsonArray.length(); i++) {
+        if (jsonObject.has("mealServiceDietInfo")) {
 
-            jsonObject = jsonArray.getJSONObject(i);
+            jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
 
-            sb.append(MakeFormat(((String) jsonObject.get("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()));
+            jsonObject = Objects.requireNonNull(jsonArray).getJSONObject(1);
+            jsonArray = jsonObject.getJSONArray("row");
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+
+                jsonObject = jsonArray.getJSONObject(i);
+
+                sb.append(MakeFormat(((String) jsonObject.get("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()));
+            }
+
+        }else {
+            sb.append(MakeFormat("급식 데이터가 없습니다",null));
         }
 
         return sb.toString();
@@ -186,8 +194,6 @@ class ApiService {
 
 
     public String TimeFormat(JSONObject jsonObject){
-
-        log.info(jsonObject.get("date").toString());
 
         LocalDate now = LocalDate.parse((String) jsonObject.get("date"), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -220,7 +226,7 @@ class ApiService {
 
     public void ncp(String content){
 
-        WebClient webClient = WebClient.builder()
+        webClient = WebClient.builder()
                 .baseUrl("https://sens.apigw.ntruss.com")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
@@ -254,7 +260,7 @@ class ApiService {
         return targetStr.replaceAll("(\r\n|\r|\n|\n\r)", "");
     }
 
-    public JSONObject kakaoResponse(String content){
+    public JSONObject kakaoResponse(String content){ // 메서드 고쳐야 됨!!
 
         JSONObject jsonObject = new JSONObject();
         JSONObject Text = new JSONObject();
