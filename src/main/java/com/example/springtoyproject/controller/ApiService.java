@@ -27,6 +27,8 @@ import reactor.util.annotation.Nullable;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -41,6 +43,9 @@ import java.util.Optional;
 class ApiService {
 
     private final UserInfoJpa userInfoJpa;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private final SchoolJpa schoolJpa;
 
@@ -58,23 +63,18 @@ class ApiService {
 
         JSONObject jsonObject = FormatKakaoBody(KakaoObject);
 
-//        try {
-
+        if(jsonObject.has("sys_date")) {
             log.info((String) jsonObject.get("sys_date"));
 
             uriBuilder.addParameter("MLSV_YMD", TimeFormat(new JSONObject((String) jsonObject.get("sys_date"))));
 
-            return uriBuilder;
+        }else {
+            JSONObject date_period = new JSONObject((String) jsonObject.get("sys_date_period"));
 
-//        }catch (JSONException e){ // 고쳐야 됨 흐름상 예외 처리는 부적절
-
-//            JSONObject date_period = new JSONObject((String) jsonObject.get("sys_date_period"));
-//
-//            uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(date_period.getJSONObject("from")))
-//                    .addParameter("MLSV_TO_YMD",TimeFormat(date_period.getJSONObject("to")));
-//
-//            return uriBuilder;
-//        }
+            uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(date_period.getJSONObject("from")))
+                    .addParameter("MLSV_TO_YMD",TimeFormat(date_period.getJSONObject("to")));
+        }
+        return uriBuilder;
     }
 
     public Mono<String> NeisApi(String uri){
@@ -124,10 +124,9 @@ class ApiService {
         if (schoolJpa.findBySD_SCHUL_CODE(jsonObject.getString("SD_SCHUL_CODE")).isEmpty())
             schoolJpa.save(school);
 
-        Optional<UserInfo> userInfo = userInfoJpa.findById(id);
+        log.info(entityManager.getReference(UserInfo.class,id).getUserid());
 
-
-        userInfo.ifPresentOrElse(user ->
+        userInfoJpa.findById(id).ifPresentOrElse(user ->
                         user = UserInfo.builder()
                                 .school(school)
                                 .build()

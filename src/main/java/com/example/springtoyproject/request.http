@@ -22,18 +22,11 @@ POST https://api.openai.com/v1/completions
 Authorization: Bearer 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
 Content-Type: application/json
 
-//{
-//        "model": "text-davinci-003",
-//        "max_tokens": 120,
-//        "temperature": 0.2,
-//        "prompt": "i am boring"
-//
-//}
 {
   "max_tokens":120,
   "temperature":0.2,
   "model":"text-davinci-003",
-  "prompt":"make your api code use java"
+  "prompt":"자바를 사용해서 너의 api 코드를 만들어줘"
 }
 
 
