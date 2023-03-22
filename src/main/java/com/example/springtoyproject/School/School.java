@@ -5,6 +5,7 @@ import com.example.springtoyproject.UserInfo.UserInfo;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.Collection;
 import java.util.List;
 
 @Entity
@@ -25,7 +26,7 @@ public class School {
     private String SCHUL_NM;
 
     @OneToMany(mappedBy = "school",cascade = CascadeType.PERSIST)
-    private List<UserInfo> userInfos;
+    private Collection<UserInfo> userInfos;
 
     @Builder
     public School(String SD_SCHUL_CODE, String ATPT_OFCDC_SC_CODE, String SCHUL_NM) {
