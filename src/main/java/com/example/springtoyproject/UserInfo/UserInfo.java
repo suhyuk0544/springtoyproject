@@ -40,4 +40,5 @@ public class UserInfo {
         this.school = school;
     }
 
+
 }

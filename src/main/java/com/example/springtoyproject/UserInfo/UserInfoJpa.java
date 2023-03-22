@@ -16,4 +16,10 @@ public interface UserInfoJpa extends JpaRepository<UserInfo,String>{
     @Transactional(readOnly = true)
     Optional<UserInfo> findById(String id);
 
+    @Override
+    boolean existsById(String s);
+
+    @Transactional(readOnly = true)
+    UserInfo findUserInfoByUserid(String id);
+
 }

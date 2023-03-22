@@ -11,13 +11,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.tomcat.util.codec.binary.Base64;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -27,15 +25,12 @@ import reactor.util.annotation.Nullable;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -44,8 +39,8 @@ class ApiService {
 
     private final UserInfoJpa userInfoJpa;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+//    @PersistenceContext
+//    private EntityManager;
 
     private final SchoolJpa schoolJpa;
 
@@ -109,7 +104,6 @@ class ApiService {
                 .addParameter("ATPT_OFCDC_SC_CODE","J10")
                 .addParameter("SD_SCHUL_CODE","7530581")
                 .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-//                .addParameter("MLSV_YMD","20230309");
     }
 
     @Transactional
@@ -124,13 +118,16 @@ class ApiService {
         if (schoolJpa.findBySD_SCHUL_CODE(jsonObject.getString("SD_SCHUL_CODE")).isEmpty())
             schoolJpa.save(school);
 
-        log.info(entityManager.getReference(UserInfo.class,id).getUserid());
+//        log.info(entityManager.getReference(UserInfo.class,id).getUserid());
+//        if (userInfoJpa.findUserInfoByUserid(id) == null)
+//            log.info("null");
 
-        userInfoJpa.findById(id).ifPresentOrElse(user ->
-                        user = UserInfo.builder()
+
+        userInfoJpa.findById(id).ifPresentOrElse(user -> //Optional 접근으로 인해 쿼리가 2개 나감
+                        user = UserInfo.builder() //트랜잭션 변경감지 사용해서 수정
                                 .school(school)
                                 .build()
-                ,() -> userInfoJpa.save(UserInfo.builder()
+                ,() -> userInfoJpa.save(UserInfo.builder() //null
                         .userid(id)
                         .school(school)
                         .auth(Auth.ROLE_USER)
@@ -168,11 +165,10 @@ class ApiService {
 
         log.info(jsonObject.toString());
 
-        JSONArray jsonArray = null;
 
         if (jsonObject.has("mealServiceDietInfo")) {
 
-            jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
+            JSONArray jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
 
             jsonObject = Objects.requireNonNull(jsonArray).getJSONObject(1);
             jsonArray = jsonObject.getJSONArray("row");
