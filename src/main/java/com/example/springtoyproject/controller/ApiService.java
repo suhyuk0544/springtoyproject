@@ -27,6 +27,8 @@ import reactor.util.annotation.Nullable;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -42,38 +44,35 @@ class ApiService {
 
     private final UserInfoJpa userInfoJpa;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     private final SchoolJpa schoolJpa;
 
-    private WebClient webClient;
-
+    private static WebClient webClient;
 
     public URIBuilder Kakao(JSONObject KakaoObject) {
 
         URIBuilder uriBuilder = new URIBuilder();
         uriBuilder.setPath("/hub/mealServiceDietInfo")
                 .addParameter("KEY", ApiKey.neiskey.getKey())
-                .addParameter("Type", "json")
-                .addParameter("pIndex", "1")
-                .addParameter("ATPT_OFCDC_SC_CODE", "J10")
-                .addParameter("SD_SCHUL_CODE", "7530581");
+                .addParameter("Type","json")
+                .addParameter("pIndex","1")
+                .addParameter("ATPT_OFCDC_SC_CODE","J10")
+                .addParameter("SD_SCHUL_CODE","7530581");
 
         JSONObject jsonObject = FormatKakaoBody(KakaoObject);
 
-
-        if (jsonObject.has("sys_date")){
-
-            log.info(jsonObject.toString());
-            log.info(jsonObject.getJSONObject("sys_date").toString());
+        if(jsonObject.has("sys_date")) {
+            log.info((String) jsonObject.get("sys_date"));
 
             uriBuilder.addParameter("MLSV_YMD", TimeFormat(new JSONObject((String) jsonObject.get("sys_date"))));
 
         }else {
-
             JSONObject date_period = new JSONObject((String) jsonObject.get("sys_date_period"));
 
             uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(date_period.getJSONObject("from")))
                     .addParameter("MLSV_TO_YMD",TimeFormat(date_period.getJSONObject("to")));
-
         }
         return uriBuilder;
     }
@@ -125,10 +124,9 @@ class ApiService {
         if (schoolJpa.findBySD_SCHUL_CODE(jsonObject.getString("SD_SCHUL_CODE")).isEmpty())
             schoolJpa.save(school);
 
-        Optional<UserInfo> userInfo = userInfoJpa.findById(id);
+        log.info(entityManager.getReference(UserInfo.class,id).getUserid());
 
-
-        userInfo.ifPresentOrElse(user ->
+        userInfoJpa.findById(id).ifPresentOrElse(user ->
                         user = UserInfo.builder()
                                 .school(school)
                                 .build()
@@ -169,16 +167,25 @@ class ApiService {
         JSONObject jsonObject = new JSONObject(diet);
 
         log.info(jsonObject.toString());
-        JSONArray jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
-        jsonObject = jsonArray.getJSONObject(1);
-        jsonArray = jsonObject.getJSONArray("row");
 
+        JSONArray jsonArray = null;
 
-        for (int i = 0; i < jsonArray.length(); i++) {
+        if (jsonObject.has("mealServiceDietInfo")) {
 
-            jsonObject = jsonArray.getJSONObject(i);
+            jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
 
-            sb.append(MakeFormat(((String) jsonObject.get("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()));
+            jsonObject = Objects.requireNonNull(jsonArray).getJSONObject(1);
+            jsonArray = jsonObject.getJSONArray("row");
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+
+                jsonObject = jsonArray.getJSONObject(i);
+
+                sb.append(MakeFormat(((String) jsonObject.get("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()));
+            }
+
+        }else {
+            sb.append(MakeFormat("급식 데이터가 없습니다",null));
         }
 
         return sb.toString();
@@ -186,8 +193,6 @@ class ApiService {
 
 
     public String TimeFormat(JSONObject jsonObject){
-
-        log.info(jsonObject.get("date").toString());
 
         LocalDate now = LocalDate.parse((String) jsonObject.get("date"), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -220,7 +225,7 @@ class ApiService {
 
     public void ncp(String content){
 
-        WebClient webClient = WebClient.builder()
+        webClient = WebClient.builder()
                 .baseUrl("https://sens.apigw.ntruss.com")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
@@ -254,7 +259,7 @@ class ApiService {
         return targetStr.replaceAll("(\r\n|\r|\n|\n\r)", "");
     }
 
-    public JSONObject kakaoResponse(String content){
+    public JSONObject kakaoResponse(String content){ // 메서드 고쳐야 됨!!
 
         JSONObject jsonObject = new JSONObject();
         JSONObject Text = new JSONObject();
