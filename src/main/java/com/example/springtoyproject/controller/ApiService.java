@@ -93,8 +93,6 @@ class ApiService {
 
     public URIBuilder Kakao(LocalDate now) {
 
-        log.info(now.toString());
-        log.info(TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         return new URIBuilder()
                 .setPath("/hub/mealServiceDietInfo")
@@ -103,7 +101,8 @@ class ApiService {
                 .addParameter("pIndex","1")
                 .addParameter("ATPT_OFCDC_SC_CODE","J10")
                 .addParameter("SD_SCHUL_CODE","7530581")
-                .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                .addParameter("MLSV_YMD","20230323");
+//                .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
     }
 
     @Transactional
@@ -127,7 +126,7 @@ class ApiService {
                         user = UserInfo.builder() //트랜잭션 변경감지 사용해서 수정
                                 .school(school)
                                 .build()
-                ,() -> userInfoJpa.save(UserInfo.builder() //null
+                ,() -> userInfoJpa.save(UserInfo.builder() //null 경우
                         .userid(id)
                         .school(school)
                         .auth(Auth.ROLE_USER)
@@ -181,7 +180,7 @@ class ApiService {
             }
 
         }else {
-            sb.append(MakeFormat("급식 데이터가 없습니다",null));
+            sb.append(MakeFormat(null,null));
         }
 
         return sb.toString();
@@ -240,6 +239,8 @@ class ApiService {
         object.put("to","01093500544");
         json.put(0,object);
         data.put("messages",json);
+        object = null; //다 쓴 참조 해제
+        json = null;
 
         log.info(data.toString());
 
@@ -263,6 +264,7 @@ class ApiService {
 
         Text.put("simpleText",new JSONObject().put("text",content));
         outputs.put("outputs",new JSONArray().put(Text));
+
         jsonObject.put("version","2.0");
         jsonObject.put("template",outputs);
 
@@ -270,7 +272,9 @@ class ApiService {
     }
 
 
-    public StringBuilder MakeFormat(String content,@Nullable String date){
+    public StringBuilder MakeFormat(@Nullable String content,@Nullable String date){
+
+
         StringBuilder sb = new StringBuilder();
 
 //        if (date != null)

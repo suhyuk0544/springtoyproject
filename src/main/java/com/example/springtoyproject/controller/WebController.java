@@ -148,7 +148,6 @@ public class WebController {
 
                     school = jsonArray.getJSONObject(1);
                     jsonArray = school.getJSONArray("row");
-                    log.info(jsonArray.toString());
 
                     httpSession.setAttribute("SchoolInfo",jsonArray);
 
@@ -171,7 +170,7 @@ public class WebController {
 
         apiService.NullCheck(apiService.SchoolSelect(kakaoJson.getString("sys_constant"),jsonArray),json.getJSONObject("userRequest").getJSONObject("user").getString("id"));
 
-        return "";
+        return "{\"statusCode\":\"202\",\"statusName\":\"success\"}";
     }
 
     @GetMapping("/main/geoLocation")
