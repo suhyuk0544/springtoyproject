@@ -101,8 +101,8 @@ class ApiService {
                 .addParameter("pIndex","1")
                 .addParameter("ATPT_OFCDC_SC_CODE","J10")
                 .addParameter("SD_SCHUL_CODE","7530581")
-                .addParameter("MLSV_YMD","20230323");
-//                .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+//                .addParameter("MLSV_YMD","20230323");
+                .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
     }
 
     @Transactional
@@ -122,11 +122,12 @@ class ApiService {
 //            log.info("null");
 
 
-        userInfoJpa.findById(id).ifPresentOrElse(user -> //Optional 접근으로 인해 쿼리가 2개 나감
+        userInfoJpa.findById(id).ifPresentOrElse(user -> { //Optional 접근으로 인해 쿼리가 2개 나감
+                        log.info(user.toString());
                         user = UserInfo.builder() //트랜잭션 변경감지 사용해서 수정
                                 .school(school)
-                                .build()
-                ,() -> userInfoJpa.save(UserInfo.builder() //null 경우
+                                .build();
+                        },() -> userInfoJpa.save(UserInfo.builder() //null 경우
                         .userid(id)
                         .school(school)
                         .auth(Auth.ROLE_USER)

@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface UserInfoJpa extends JpaRepository<UserInfo,String>{
 
     @Override
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     Optional<UserInfo> findById(String id);
 
     @Override
