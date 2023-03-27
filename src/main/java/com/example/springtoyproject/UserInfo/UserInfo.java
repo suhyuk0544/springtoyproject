@@ -10,8 +10,7 @@ import javax.transaction.Transactional;
 import java.util.Objects;
 
 
-@Getter
-@Setter
+
 @Entity
 @NoArgsConstructor
 public class UserInfo {
@@ -43,7 +42,35 @@ public class UserInfo {
     }
 
     @Transactional
-    public void update(UserInfo userInfo){ // 이걸로 Setter 없앤다 private set 메서드를 만들어서 외부에서 함부로 사용 할 수 없도록
+    public void update(School school){ // 이걸로 Setter 없앤다 private set 메서드를 만들어서 외부에서 함부로 사용 할 수 없도록
+
+        setSchool(school);
+
+    }
+
+    public String getUserid() {
+        return userid;
+    }
+
+    public Auth getAuth() {
+        return auth;
+    }
+
+    public School getSchool() {
+        return school;
+    }
+
+    private void setUserid(String userid) {
+        this.userid = userid;
+    }
+
+    private void setAuth(Auth auth) {
+        this.auth = auth;
+    }
+
+
+    private void setSchool(School school) {
+        this.school = school;
     }
 
     @Override

@@ -126,7 +126,7 @@ class ApiService {
 
 
         userInfoJpa.findById(id).ifPresentOrElse(user ->  //Optional 접근으로 인해 쿼리가 2개 나감
-                        user.setSchool(entityManager.find(School.class,jsonObject.getString("SD_SCHUL_CODE"))) //트랜잭션 변경감지 사용해서 수정
+                        user.update(entityManager.find(School.class,jsonObject.getString("SD_SCHUL_CODE"))) //트랜잭션 변경감지 사용해서 수정
                         ,() -> userInfoJpa.save(UserInfo.builder() //null 경우
                                     .userid(id)
                                     .school(school)
