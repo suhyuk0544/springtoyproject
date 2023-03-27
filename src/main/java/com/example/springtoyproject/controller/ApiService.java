@@ -25,6 +25,8 @@ import reactor.util.annotation.Nullable;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -39,8 +41,8 @@ class ApiService {
 
     private final UserInfoJpa userInfoJpa;
 
-//    @PersistenceContext
-//    private EntityManager;
+    @PersistenceContext
+    private final EntityManager entityManager;
 
     private final SchoolJpa schoolJpa;
 
@@ -122,16 +124,14 @@ class ApiService {
 //            log.info("null");
 
 
-        userInfoJpa.findById(id).ifPresentOrElse(user -> { //Optional 접근으로 인해 쿼리가 2개 나감
-                        log.info(user.toString());
-                        user = UserInfo.builder() //트랜잭션 변경감지 사용해서 수정
-                                .school(school)
-                                .build();
-                        },() -> userInfoJpa.save(UserInfo.builder() //null 경우
-                        .userid(id)
-                        .school(school)
-                        .auth(Auth.ROLE_USER)
-                        .build()));
+
+        userInfoJpa.findById(id).ifPresentOrElse(user ->  //Optional 접근으로 인해 쿼리가 2개 나감
+                        user.setSchool(entityManager.find(School.class,jsonObject.getString("SD_SCHUL_CODE"))) //트랜잭션 변경감지 사용해서 수정
+                        ,() -> userInfoJpa.save(UserInfo.builder() //null 경우
+                                    .userid(id)
+                                    .school(school)
+                                    .auth(Auth.ROLE_USER)
+                                    .build()));
     }
 
     public JSONObject FormatRequestKoGptJson(String text){

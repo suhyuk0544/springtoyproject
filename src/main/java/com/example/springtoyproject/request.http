@@ -52,7 +52,7 @@ Content-Type: application/json
     "utterance": "발화 내용",
     "lang": null,
     "user": {
-      "id": "512369",
+      "id": "512368",
       "type": "accountId",
       "properties": {}
     }
@@ -65,7 +65,7 @@ Content-Type: application/json
     "name": "g7qd4wfygz",
     "clientExtra": null,
     "params": {
-      "sys_constant": "양평고"
+      "sys_constant": "양일고"
     },
     "id": "1vgk5w711t6l3sr6nixthi7c",
     "detailParams": {}
@@ -94,7 +94,7 @@ Content-Type: application/json
     "utterance": "발화 내용",
     "lang": null,
     "user": {
-      "id": "512369",
+      "id": "512368",
       "type": "accountId",
       "properties": {}
     }
@@ -107,7 +107,7 @@ Content-Type: application/json
     "name": "g7qd4wfygz",
     "clientExtra": null,
     "params": {
-      "sys_constant": "양평고"
+      "sys_constant": "양일고"
     },
     "id": "1vgk5w711t6l3sr6nixthi7c",
     "detailParams": {}

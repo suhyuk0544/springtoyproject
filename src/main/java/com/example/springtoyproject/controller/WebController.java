@@ -69,6 +69,7 @@ public class WebController {
     }
 
     @Scheduled(cron = "0 0 9 * * 1-5",zone = "Asia/Seoul")
+    @GetMapping(value = "/sans")
     public void MyDiet(){
         try {
             URI uri = apiService.Kakao(LocalDate.now()).build();

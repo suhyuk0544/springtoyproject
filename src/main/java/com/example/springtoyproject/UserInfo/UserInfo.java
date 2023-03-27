@@ -4,16 +4,14 @@ package com.example.springtoyproject.UserInfo;
 import com.example.springtoyproject.School.School;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
-import org.hibernate.Hibernate;
-import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 
 import javax.persistence.*;
 import javax.transaction.Transactional;
-import java.util.List;
 import java.util.Objects;
 
 
 @Getter
+@Setter
 @Entity
 @NoArgsConstructor
 public class UserInfo {
@@ -33,11 +31,11 @@ public class UserInfo {
     @Builder
     public UserInfo(String userid,Auth auth,School school) {
 
-        this.userid = userid;
+        this.userid = Objects.requireNonNull(userid);
 
-        this.auth = auth;
+        this.auth = Objects.requireNonNull(auth);
 
-        this.school = school;
+        this.school = Objects.requireNonNull(school);
     }
 
     public boolean isEmpty(){
@@ -45,8 +43,7 @@ public class UserInfo {
     }
 
     @Transactional
-    public void update(UserInfo userInfo){
-
+    public void update(UserInfo userInfo){ // 이걸로 Setter 없앤다 private set 메서드를 만들어서 외부에서 함부로 사용 할 수 없도록
     }
 
     @Override
@@ -64,13 +61,11 @@ public class UserInfo {
     }
 
 
-
     @Override
     public String toString() {
         return userid != null ? "UserInfo{" +
                 "userid='" + userid + '\'' +
                 ", auth=" + auth +
-                ", school=" + school +
                 '}' : "UserInfo.empty";
     }
 }
