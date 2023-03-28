@@ -48,7 +48,7 @@ class ApiService {
 
     private static WebClient webClient;
 
-    public URIBuilder Kakao(JSONObject KakaoObject) {
+    public URIBuilder kakao(JSONObject KakaoObject) {
 
         URIBuilder uriBuilder = new URIBuilder();
         uriBuilder.setPath("/hub/mealServiceDietInfo")
@@ -74,7 +74,7 @@ class ApiService {
         return uriBuilder;
     }
 
-    public Mono<String> NeisApi(String uri){
+    public Mono<String> neisApi(String uri){
 
         webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
@@ -93,7 +93,7 @@ class ApiService {
                 .map(this::FormatDietJson);
     }
 
-    public URIBuilder Kakao(LocalDate now) {
+    public URIBuilder kakao(LocalDate now) {
 
 
         return new URIBuilder()
@@ -108,7 +108,7 @@ class ApiService {
     }
 
     @Transactional
-    public void NullCheck(JSONObject jsonObject,String id){
+    public void nullCheck(JSONObject jsonObject,String id){
 
         School school = School.builder()
                 .ATPT_OFCDC_SC_CODE(jsonObject.getString("ATPT_OFCDC_SC_CODE"))
@@ -122,8 +122,6 @@ class ApiService {
 //        log.info(entityManager.getReference(UserInfo.class,id).getUserid());
 //        if (userInfoJpa.findUserInfoByUserid(id) == null)
 //            log.info("null");
-
-
 
         userInfoJpa.findById(id).ifPresentOrElse(user ->  //Optional 접근으로 인해 쿼리가 2개 나감
                         user.update(entityManager.find(School.class,jsonObject.getString("SD_SCHUL_CODE"))) //트랜잭션 변경감지 사용해서 수정

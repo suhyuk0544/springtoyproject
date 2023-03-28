@@ -53,14 +53,14 @@ public class WebController {
 
         URI uri = null;
         try {
-            uri = apiService.Kakao(kakaoJson).build();
+            uri = apiService.kakao(kakaoJson).build();
             log.info(uri.toString());
 
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
 
-        return apiService.NeisApi(Objects.requireNonNull(uri).toString())
+        return apiService.neisApi(Objects.requireNonNull(uri).toString())
                 .map(diet -> {
                     JSONObject response = apiService.kakaoResponse(diet);
 
@@ -69,12 +69,11 @@ public class WebController {
     }
 
     @Scheduled(cron = "0 0 9 * * 1-5",zone = "Asia/Seoul")
-    @GetMapping(value = "/sans")
     public void MyDiet(){
         try {
-            URI uri = apiService.Kakao(LocalDate.now()).build();
+            URI uri = apiService.kakao(LocalDate.now()).build();
 
-            apiService.NeisApi(uri.toString())
+            apiService.neisApi(uri.toString())
                     .subscribe(apiService::ncp);
 
         } catch (URISyntaxException e) {
@@ -157,7 +156,7 @@ public class WebController {
     }
 
     @RequestMapping(value = "/KakaoBot/school/detail",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public String SchoolDetail(@RequestBody HashMap<String,Object> kakao,HttpSession httpSession){
+    public ResponseEntity<Object> SchoolDetail(@RequestBody HashMap<String,Object> kakao,HttpSession httpSession){
 
         log.info("===========================================detail===================================================");
 
@@ -169,9 +168,9 @@ public class WebController {
 
         JSONObject kakaoJson = apiService.FormatKakaoBody(json);
 
-        apiService.NullCheck(apiService.SchoolSelect(kakaoJson.getString("sys_constant"),jsonArray),json.getJSONObject("userRequest").getJSONObject("user").getString("id"));
+        apiService.nullCheck(apiService.SchoolSelect(kakaoJson.getString("sys_constant"),jsonArray),json.getJSONObject("userRequest").getJSONObject("user").getString("id"));
 
-        return "{\"statusCode\":\"202\",\"statusName\":\"success\"}";
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/main/geoLocation")

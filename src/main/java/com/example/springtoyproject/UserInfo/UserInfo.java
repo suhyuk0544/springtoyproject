@@ -11,6 +11,7 @@ import java.util.Objects;
 
 
 
+@Getter
 @Entity
 @NoArgsConstructor
 public class UserInfo {
@@ -42,22 +43,13 @@ public class UserInfo {
     }
 
     @Transactional
-    public void update(School school){ // 이걸로 Setter 없앤다 private set 메서드를 만들어서 외부에서 함부로 사용 할 수 없도록
+    public <T> void update(T var){ // 이걸로 Setter 없앤다 private set 메서드를 만들어서 외부에서 함부로 사용 할 수 없도록
 
-        setSchool(school);
+        if (var instanceof Auth)
+            setAuth((Auth) var);
+        else if (var instanceof School)
+            setSchool((School) var);
 
-    }
-
-    public String getUserid() {
-        return userid;
-    }
-
-    public Auth getAuth() {
-        return auth;
-    }
-
-    public School getSchool() {
-        return school;
     }
 
     private void setUserid(String userid) {
@@ -67,7 +59,6 @@ public class UserInfo {
     private void setAuth(Auth auth) {
         this.auth = auth;
     }
-
 
     private void setSchool(School school) {
         this.school = school;
@@ -86,7 +77,6 @@ public class UserInfo {
     public int hashCode() {
         return Objects.hash(userid);
     }
-
 
     @Override
     public String toString() {

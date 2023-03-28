@@ -18,4 +18,5 @@ public interface UserInfoJpa extends JpaRepository<UserInfo,String>{
     @Transactional(readOnly = true)
     UserInfo findUserInfoByUserid(String id);
 
+
 }
