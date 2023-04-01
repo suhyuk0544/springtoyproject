@@ -45,7 +45,7 @@ public class WebController {
     private static WebClient webClient;
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<String> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
+    public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
 
         JSONObject kakaoJson = new JSONObject(kakao);
 
@@ -53,19 +53,20 @@ public class WebController {
 
         URI uri = null;
         try {
-            uri = apiService.kakao(kakaoJson).build();
-            log.info(uri.toString());
+            uri = apiService.kakao(kakaoJson,kakaoJson.getJSONObject("userRequest").getJSONObject("user").getString("id")).build();
+            if (uri == null)
+                return new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"유저 정보가 없습니다",null),HttpStatus.OK);
 
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
 
-        return apiService.neisApi(Objects.requireNonNull(uri).toString())
+        return new ResponseEntity<>(apiService.neisApi(Objects.requireNonNull(uri).toString())
                 .map(diet -> {
-                    JSONObject response = apiService.kakaoResponse(diet);
+                    JSONObject response = apiService.kakaoResponse(kakaoResponseType.simpleText,diet,null);
 
                     return response.toString();
-                });
+                }),HttpStatus.OK);
     }
 
     @Scheduled(cron = "0 0 9 * * 1-5",zone = "Asia/Seoul")
@@ -112,7 +113,7 @@ public class WebController {
 
                     response = jsonArray.getJSONObject(0);
 
-                    response = apiService.kakaoResponse(apiService.deleteLineSeparator(response.getString("text")));
+                    response = apiService.kakaoResponse(kakaoResponseType.simpleText,apiService.deleteLineSeparator(response.getString("text")),null);
 
                     return response.toString();
                 });
@@ -151,26 +152,23 @@ public class WebController {
 
                     httpSession.setAttribute("SchoolInfo",jsonArray);
 
-                    return school.toString();
+                    return apiService.kakaoResponse(kakaoResponseType.BasicCard,null,jsonArray).toString();
                 });
     }
 
     @RequestMapping(value = "/KakaoBot/school/detail",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> SchoolDetail(@RequestBody HashMap<String,Object> kakao,HttpSession httpSession){
+    public ResponseEntity<String> SchoolDetail(@RequestBody HashMap<String,Object> kakao,HttpSession httpSession){
 
         log.info("===========================================detail===================================================");
 
-        log.info(httpSession.getAttribute("SchoolInfo").toString());
-
-        JSONArray jsonArray = (JSONArray) httpSession.getAttribute("SchoolInfo");
-
         JSONObject json = new JSONObject(kakao);
 
-        JSONObject kakaoJson = apiService.FormatKakaoBody(json);
+        log.info(json.toString());
 
-        apiService.nullCheck(apiService.SchoolSelect(kakaoJson.getString("sys_constant"),jsonArray),json.getJSONObject("userRequest").getJSONObject("user").getString("id"));
 
-        return ResponseEntity.ok().build();
+        apiService.nullCheck(json.getJSONObject("action").getJSONObject("clientExtra"),json.getJSONObject("userRequest").getJSONObject("user").getString("id"));
+
+        return new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"저장 되었습니다",null).toString(),HttpStatus.OK);
     }
 
     @GetMapping("/main/geoLocation")
@@ -183,7 +181,7 @@ public class WebController {
         log.info(request.getRemoteAddr());
 
         webClient = WebClient.builder()
-                .baseUrl("https://geolocation.apigw.ntruss.com")
+                .baseUrl("hrttps://geolocation.apigw.ntruss.com")
                 .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
                 .defaultHeader("x-ncp-iam-access-key",ApiKey.NcpAccessKey.getKey())
                 .defaultHeader("x-ncp-apigw-signature-v2",apiService.makeSignature(Long.toString(System.currentTimeMillis()),"GET","/geolocation/v2/geoLocation?ip="+ip+"&ext=t&responseFormatType=json"))

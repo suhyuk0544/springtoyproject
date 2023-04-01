@@ -71,6 +71,70 @@ Content-Type: application/json
     "detailParams": {}
   }
 }
+###
+POST http://localhost:8080/KakaoBot/school/detail
+Content-Type: application/json
+
+{
+  "intent": {
+    "id": "gmucdqb8c45fnpd0rr3krhdr",
+    "name": "블록 이름"
+  },
+  "userRequest": {
+    "timezone": "Asia/Seoul",
+    "params": {
+      "ignoreMe": "true"
+    },
+    "block": {
+      "id": "gmucdqb8c45fnpd0rr3krhdr",
+      "name": "블록 이름"
+    },
+    "utterance": "발화 내용",
+    "lang": null,
+    "user": {
+      "id": "512368",
+      "type": "accountId",
+      "properties": {}
+    }
+  },
+  "bot": {
+    "id": "63ef45221727873452d80b45",
+    "name": "봇 이름"
+  },
+  "action": {
+    "name": "g7qd4wfygz",
+    "params": {
+      "sys_constant": "양일고"
+    },
+    "clientExtra":{
+      "ATPT_OFCDC_SC_NM":"경기도교육청",
+      "ORG_RDNDA":"(양평읍)",
+      "SCHUL_KND_SC_NM":"고등학교",
+      "FOND_SC_NM":"공립",
+      "ENE_BFE_SEHF_SA":"경기도 양평군 양평읍 양근로 260",
+      "SD_SCHUL_CODE":"7530581",
+      "ORG_FAXNO":"031-771-0434",
+      "LCTN_SC_NM":"경기도",
+      "HS_GNRL_BUSNS_SC_NM":"전문계",
+      "INDST_SPECL_CCCCL_EXST_YN":"N",
+      "FOND_YMD":"19470624",
+      "ORG_RDNZC":"12562 ",
+      "DGHT_SC_NM":"주간",
+      "ORG_TELNO":"031-772-2580",
+      "ATPT_OFCDC_SC_CODE":"J10",
+      "ENG_SCHUL_NM":"Yangpyeong High School",
+      "HS_SC_NM":"일반고",
+      "FOAS_MEMRD":"19470624",
+      "JU_ORG_NM":"경기도교육청",
+      "SCHUL_NM":"양평고등학교",
+      "LOAD_DTM":"20230326",
+      "COEDU_SC_NM":"남여공학"
+    },
+    "id": "1vgk5w711t6l3sr6nixthi7c",
+    "detailParams": {}
+  }
+}
+
 
 ###
 
@@ -150,9 +214,7 @@ Content-Type: application/json
     "clientExtra": null,
     "params": {
       "sys_constant": "양평고",
-      "sys_date": {
-        "date": "2023-03-16"
-      }
+      "sys_date": "이번주"
     },
     "id": "1vgk5w711t6l3sr6nixthi7c",
     "detailParams": {}

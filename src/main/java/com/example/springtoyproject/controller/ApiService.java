@@ -33,6 +33,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -48,28 +49,40 @@ class ApiService {
 
     private static WebClient webClient;
 
-    public URIBuilder kakao(JSONObject KakaoObject) {
+    public URIBuilder kakao(JSONObject KakaoObject,String id) {
+
+        Optional<UserInfo> userInfo = userInfoJpa.findById(id);
+
+        if (userInfo.isEmpty()){
+            return null;
+        }
+        School school = userInfo.get().getSchool();
 
         URIBuilder uriBuilder = new URIBuilder();
         uriBuilder.setPath("/hub/mealServiceDietInfo")
                 .addParameter("KEY", ApiKey.neiskey.getKey())
                 .addParameter("Type","json")
                 .addParameter("pIndex","1")
-                .addParameter("ATPT_OFCDC_SC_CODE","J10")
-                .addParameter("SD_SCHUL_CODE","7530581");
+                .addParameter("ATPT_OFCDC_SC_CODE",school.getATPT_OFCDC_SC_CODE())
+                .addParameter("SD_SCHUL_CODE",school.getSD_SCHUL_CODE());
 
         JSONObject jsonObject = FormatKakaoBody(KakaoObject);
 
-        if(jsonObject.has("sys_date")) {
-            log.info((String) jsonObject.get("sys_date"));
+        switch (jsonObject.getString("sys_date")) {
+            case "오 늘":{
 
-            uriBuilder.addParameter("MLSV_YMD", TimeFormat(new JSONObject((String) jsonObject.get("sys_date"))));
+                uriBuilder.addParameter("MLSV_YMD",TimeFormat(LocalDate.now(),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            }
+            case "내 일" :{
+                uriBuilder.addParameter("MLSV_YMD",TimeFormat(LocalDate.now().plusDays(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            }
+            case "이번주": {
+//                JSONObject date_period = new JSONObject((String) jsonObject.get("sys_date_period"));
+                LocalDate now = LocalDate.now();
 
-        }else {
-            JSONObject date_period = new JSONObject((String) jsonObject.get("sys_date_period"));
-
-            uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(date_period.getJSONObject("from")))
-                    .addParameter("MLSV_TO_YMD",TimeFormat(date_period.getJSONObject("to")));
+                uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(LocalDate.now(),DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                        .addParameter("MLSV_TO_YMD",TimeFormat(now.plusWeeks(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            }
         }
         return uriBuilder;
     }
@@ -206,13 +219,13 @@ class ApiService {
 
         JSONObject jsonObject = new JSONObject();
 
-        for (int i = 0; i < jsonArray.length(); i++) {
+         for (int i = 0; i <= jsonArray.length(); i++) {
             jsonObject = jsonArray.getJSONObject(i);
             if (jsonObject.getString("SCHUL_NM").equals(SCHUL_NM))
-                break;
+                return jsonObject;
         }
 
-        return jsonObject;
+        return null;
     }
 
 
@@ -255,20 +268,45 @@ class ApiService {
         return targetStr.replaceAll("(\r\n|\r|\n|\n\r)", "");
     }
 
-    public JSONObject kakaoResponse(String content){ // 메서드 고쳐야 됨!!
+    public JSONObject kakaoResponse(kakaoResponseType kakaoResponseType,@Nullable String content,@Nullable JSONArray jsonArray){ // 메서드 고쳐야 됨!!
 
         JSONObject jsonObject = new JSONObject();
-        JSONObject Text = new JSONObject();
-        JSONObject outputs = new JSONObject();
+        JSONObject output = new JSONObject();
+        JSONArray outputs = new JSONArray();
 
-        Text.put("simpleText",new JSONObject().put("text",content));
-        outputs.put("outputs",new JSONArray().put(Text));
+        switch (kakaoResponseType) {
+            case simpleText -> output.put("simpleText", new JSONObject().put("text", content));
 
-        jsonObject.put("version","2.0");
-        jsonObject.put("template",outputs);
+            case simpleImage -> output.put("simpleImage", new JSONObject().put("imageUrl", content));
+
+            case BasicCard -> {
+                log.info(Objects.requireNonNull(jsonArray).toString());
+                JSONObject carousel = new JSONObject();
+                JSONArray items = new JSONArray();
+                carousel.put("type","basicCard");
+                carousel.put("items",items);
+
+                for (int i = 0; i < Objects.requireNonNull(jsonArray).length(); i++) {
+                    JSONObject basicCard = new JSONObject();
+                    basicCard.put("title",jsonArray.getJSONObject(i).getString("SCHUL_NM"));
+                    basicCard.put("description",jsonArray.getJSONObject(i).getString("ORG_RDNMA"));
+                    basicCard.put("thumbnail", new JSONObject().put("imageUrl","https://t1.kakaocdn.net/kakaocorp/about/OpenBuilder/builder_logo.png"));
+                    basicCard.put("buttons", new JSONArray().put(new JSONObject().put("action", "block").put("label", "등록").put("blockId","63ef5f200035284b215abadf").put("extra",jsonArray.getJSONObject(i)) .put("messageText",jsonArray.getJSONObject(i).getString("SCHUL_NM"))));
+                    items.put(basicCard);
+                    log.info(items.toString());
+                }
+                output.put("carousel",carousel);
+            }
+            default -> output.put("simpleText", new JSONObject().put("text", "지원하지 않는 응답 유형입니다."));
+        }
+
+        outputs.put(output);
+        jsonObject.put("version", "2.0");
+        jsonObject.put("template", new JSONObject().put("outputs", outputs));
 
         return jsonObject;
     }
+
 
 
     public StringBuilder MakeFormat(@Nullable String content,@Nullable String date){
@@ -276,8 +314,8 @@ class ApiService {
 
         StringBuilder sb = new StringBuilder();
 
-//        if (date != null)
-//            sb.append(date).append("\n");
+        if (date != null)
+            sb.append(date).append("\n");
 
         if (content == null)
             return sb.append("급식이 없습니다");
