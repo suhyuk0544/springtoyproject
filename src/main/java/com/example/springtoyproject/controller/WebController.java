@@ -1,18 +1,21 @@
 package com.example.springtoyproject.controller;
 
 import com.example.springtoyproject.School.SchoolJpa;
+import com.example.springtoyproject.UserInfo.UserInfo;
 import com.example.springtoyproject.UserInfo.UserInfoJpa;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
+import org.aspectj.apache.bcel.classfile.Module;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Mono;
 
 
@@ -28,6 +31,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @RestController
 @Slf4j
@@ -53,10 +57,11 @@ public class WebController {
 
         URI uri = null;
         try {
-            uri = apiService.kakao(kakaoJson,kakaoJson.getJSONObject("userRequest").getJSONObject("user").getString("id")).build();
-            if (uri == null)
-                return new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"유저 정보가 없습니다",null),HttpStatus.OK);
-
+            URIBuilder uriBuilder = apiService.kakao(kakaoJson,kakaoJson.getJSONObject("userRequest").getJSONObject("user").getString("id"));
+            if (uriBuilder == null)
+                return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
+                                                .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
+            uri = uriBuilder.build();
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
@@ -68,6 +73,20 @@ public class WebController {
                     return response.toString();
                 }),HttpStatus.OK);
     }
+
+    @RequestMapping(value = "/KakaoBot/info/me", method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> userInfo(@RequestBody Map<String,Object> kakao){
+
+        JSONObject kakaoJson = new JSONObject(kakao);
+
+        String id = kakaoJson.getJSONObject("userRequest").getJSONObject("user").getString("id");
+
+        Optional<UserInfo> userInfo = userInfoJpa.findById(id); // 이 부분 고쳐야 됨
+
+        return userInfo.map(info -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText, info.getUserid() + "는\n" + info.getSchool().getSCHUL_NM() + "로 설정 되어 있습니다.", null).toString(), HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText, "유저 정보가 없습니다", null).toString(), HttpStatus.OK));
+    }
+
 
     @Scheduled(cron = "0 0 9 * * 1-5",zone = "Asia/Seoul")
     public void MyDiet(){
@@ -121,7 +140,7 @@ public class WebController {
 
 
     @RequestMapping(value = "/KakaoBot/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<String> School(@RequestBody HashMap<String,Object> KakaoJson, HttpSession httpSession){
+    public ResponseEntity<Mono<String>> School(@RequestBody HashMap<String,Object> KakaoJson, HttpSession httpSession){
 
         JSONObject kakaoJson = new JSONObject(KakaoJson);
 
@@ -131,7 +150,8 @@ public class WebController {
                 .baseUrl("https://open.neis.go.kr")
                 .build();
 
-        return webClient.get()
+        return new ResponseEntity<>(
+                webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/hub/schoolInfo")
                         .queryParam("SCHUL_NM", jsonObject.get("sys_constant"))
@@ -145,6 +165,9 @@ public class WebController {
                 .map(school_info -> {
                     JSONObject school = new JSONObject(school_info);
 
+                    if (!school.has("schoolInfo"))
+                        return apiService.kakaoResponse(kakaoResponseType.simpleText,"그런 학교는 존재하지 않아요",null).toString();
+
                     JSONArray jsonArray = school.getJSONArray("schoolInfo");
 
                     school = jsonArray.getJSONObject(1);
@@ -153,7 +176,7 @@ public class WebController {
                     httpSession.setAttribute("SchoolInfo",jsonArray);
 
                     return apiService.kakaoResponse(kakaoResponseType.BasicCard,null,jsonArray).toString();
-                });
+                }),HttpStatus.OK);
     }
 
     @RequestMapping(value = "/KakaoBot/school/detail",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)

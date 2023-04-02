@@ -51,9 +51,9 @@ class ApiService {
 
     public URIBuilder kakao(JSONObject KakaoObject,String id) {
 
-        Optional<UserInfo> userInfo = userInfoJpa.findById(id);
+        Optional<UserInfo> userInfo = userInfoJpa.findById(id); //이 부분부터
 
-        if (userInfo.isEmpty()){
+        if (userInfo.isEmpty()){ // 이 부분까지 메서드 처리
             return null;
         }
         School school = userInfo.get().getSchool();
@@ -67,18 +67,16 @@ class ApiService {
                 .addParameter("SD_SCHUL_CODE",school.getSD_SCHUL_CODE());
 
         JSONObject jsonObject = FormatKakaoBody(KakaoObject);
+        LocalDate now = LocalDate.now();
 
         switch (jsonObject.getString("sys_date")) {
-            case "오 늘":{
-
-                uriBuilder.addParameter("MLSV_YMD",TimeFormat(LocalDate.now(),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            case "오늘":{
+                uriBuilder.addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             }
-            case "내 일" :{
-                uriBuilder.addParameter("MLSV_YMD",TimeFormat(LocalDate.now().plusDays(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            case "내일" :{
+                uriBuilder.addParameter("MLSV_YMD",TimeFormat(now.plusDays(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             }
             case "이번주": {
-//                JSONObject date_period = new JSONObject((String) jsonObject.get("sys_date_period"));
-                LocalDate now = LocalDate.now();
 
                 uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(LocalDate.now(),DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                         .addParameter("MLSV_TO_YMD",TimeFormat(now.plusWeeks(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));

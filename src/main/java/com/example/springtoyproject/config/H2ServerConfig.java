@@ -14,7 +14,7 @@ public class H2ServerConfig {
 
     @Bean
     public Server h2TcpServer() throws SQLException {
-        return Server.createTcpServer().start();
+        return Server.createTcpServer("-tcpAllowOthers").start();
     }
 
 }
