@@ -277,7 +277,7 @@ Content-Type: application/json
     "clientExtra": null,
     "params": {
       "sys_constant": "양평고",
-      "sys_date": "오 늘"
+      "sys_date": "오늘"
     },
     "id": "1vgk5w711t6l3sr6nixthi7c",
     "detailParams": {}

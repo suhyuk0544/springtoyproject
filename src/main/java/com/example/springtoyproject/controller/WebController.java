@@ -57,11 +57,11 @@ public class WebController {
 
         URI uri = null;
         try {
-            URIBuilder uriBuilder = apiService.kakao(kakaoJson,kakaoJson.getJSONObject("userRequest").getJSONObject("user").getString("id"));
-            if (uriBuilder == null)
+            Optional<URIBuilder> uriBuilder = apiService.kakao(kakaoJson,kakaoJson.getJSONObject("userRequest").getJSONObject("user").getString("id"));
+            if (uriBuilder.isEmpty())
                 return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
                                                 .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
-            uri = uriBuilder.build();
+            uri = uriBuilder.get().build();
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
@@ -79,11 +79,11 @@ public class WebController {
 
         JSONObject kakaoJson = new JSONObject(kakao);
 
-        String id = kakaoJson.getJSONObject("userRequest").getJSONObject("user").getString("id");
+        if (userService.getUserInfoId(kakaoJson).isEmpty())
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
-        Optional<UserInfo> userInfo = userInfoJpa.findById(id); // 이 부분 고쳐야 됨
-
-        return userInfo.map(info -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText, info.getUserid() + "는\n" + info.getSchool().getSCHUL_NM() + "로 설정 되어 있습니다.", null).toString(), HttpStatus.OK))
+        return userInfoJpa.findById(userService.getUserInfoId(kakaoJson).get())
+                .map(info -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"당신은\n" + info.getSchool().getSCHUL_NM() + "로 설정 되어 있습니다.", null).toString(), HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText, "유저 정보가 없습니다", null).toString(), HttpStatus.OK));
     }
 

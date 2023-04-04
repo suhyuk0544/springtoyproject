@@ -4,10 +4,10 @@ import com.example.springtoyproject.config.ApiKey;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONObject;
 import org.apache.tomcat.util.codec.binary.Base64;
 
 
+import org.json.JSONObject;
 import org.json.simple.JSONArray;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,6 +21,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,4 +31,13 @@ public class UserService {
 
     private UserInfoJpa userInfoJpa;
 
+    public Optional<String> getUserInfoId(JSONObject jsonObject) {
+
+        if (!jsonObject.has("userRequest")){
+            return Optional.empty();
+        }
+
+        return Optional.of(jsonObject.getJSONObject("userRequest").getJSONObject("user").getString("id"));
+
+    }
 }

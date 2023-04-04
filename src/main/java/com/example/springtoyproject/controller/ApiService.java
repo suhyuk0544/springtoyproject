@@ -49,13 +49,13 @@ class ApiService {
 
     private static WebClient webClient;
 
-    public URIBuilder kakao(JSONObject KakaoObject,String id) {
+    public Optional<URIBuilder> kakao(JSONObject KakaoObject,String id) {
 
         Optional<UserInfo> userInfo = userInfoJpa.findById(id); //이 부분부터
 
-        if (userInfo.isEmpty()){ // 이 부분까지 메서드 처리
-            return null;
-        }
+        if (userInfo.isEmpty()) // 이 부분까지 메서드 처리
+            return Optional.empty();
+
         School school = userInfo.get().getSchool();
 
         URIBuilder uriBuilder = new URIBuilder();
@@ -70,19 +70,14 @@ class ApiService {
         LocalDate now = LocalDate.now();
 
         switch (jsonObject.getString("sys_date")) {
-            case "오늘":{
-                uriBuilder.addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-            }
-            case "내일" :{
-                uriBuilder.addParameter("MLSV_YMD",TimeFormat(now.plusDays(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-            }
-            case "이번주": {
+            case "오늘" -> uriBuilder.addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
-                uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(LocalDate.now(),DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                        .addParameter("MLSV_TO_YMD",TimeFormat(now.plusWeeks(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-            }
+            case "내일" -> uriBuilder.addParameter("MLSV_YMD",TimeFormat(now.plusDays(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+            case "이번주" -> uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(LocalDate.now(),DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                                      .addParameter("MLSV_TO_YMD",TimeFormat(now.plusWeeks(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         }
-        return uriBuilder;
+        return Optional.of(uriBuilder);
     }
 
     public Mono<String> neisApi(String uri){
@@ -114,7 +109,6 @@ class ApiService {
                 .addParameter("pIndex","1")
                 .addParameter("ATPT_OFCDC_SC_CODE","J10")
                 .addParameter("SD_SCHUL_CODE","7530581")
-//                .addParameter("MLSV_YMD","20230323");
                 .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
     }
 
