@@ -8,14 +8,12 @@ import com.example.springtoyproject.config.ApiKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
-import org.aspectj.apache.bcel.classfile.Module;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Mono;
 
 
@@ -57,7 +55,11 @@ public class WebController {
 
         URI uri = null;
         try {
-            Optional<URIBuilder> uriBuilder = apiService.kakao(kakaoJson,kakaoJson.getJSONObject("userRequest").getJSONObject("user").getString("id"));
+            if (userService.getUserInfoId(kakaoJson).isEmpty())
+                return ResponseEntity.badRequest().build();
+
+            Optional<URIBuilder> uriBuilder = apiService.kakao(kakaoJson,userService.getUserInfoId(kakaoJson).get());
+
             if (uriBuilder.isEmpty())
                 return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
                                                 .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
@@ -180,7 +182,7 @@ public class WebController {
     }
 
     @RequestMapping(value = "/KakaoBot/school/detail",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> SchoolDetail(@RequestBody HashMap<String,Object> kakao,HttpSession httpSession){
+    public ResponseEntity<String> SchoolDetail(@RequestBody HashMap<String,Object> kakao){
 
         log.info("===========================================detail===================================================");
 
@@ -188,8 +190,12 @@ public class WebController {
 
         log.info(json.toString());
 
+        Optional<String> str = userService.getUserInfoId(json);
 
-        apiService.nullCheck(json.getJSONObject("action").getJSONObject("clientExtra"),json.getJSONObject("userRequest").getJSONObject("user").getString("id"));
+        if (str.isEmpty())
+            return ResponseEntity.badRequest().build();
+
+        apiService.nullCheck(json.getJSONObject("action").getJSONObject("clientExtra"),str.get());
 
         return new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"저장 되었습니다",null).toString(),HttpStatus.OK);
     }
