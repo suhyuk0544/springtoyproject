@@ -65,7 +65,7 @@ public class WebController {
                                                 .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
             uri = uriBuilder.get().build();
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
         }
 
         return new ResponseEntity<>(apiService.neisApi(Objects.requireNonNull(uri).toString())
