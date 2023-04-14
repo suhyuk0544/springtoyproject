@@ -68,6 +68,7 @@ public class WebController {
             return ResponseEntity.badRequest().build();
         }
 
+
         return new ResponseEntity<>(apiService.neisApi(Objects.requireNonNull(uri).toString())
                 .map(diet -> {
                     JSONObject response = apiService.kakaoResponse(kakaoResponseType.simpleText,diet,null);
