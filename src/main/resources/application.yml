@@ -37,6 +37,21 @@ spring:
 server:
 
   port: 8080
+
+  ssl:
+    enabled: true
+    key-password: suhyuk1027
+    key-store-password: suhyuk1027
+    key-store: src/main/resources/ssl.jks
+
+    key-store-type: "JKS"
+    enabled-protocols:
+    - TLSv1.1
+    - TLSv1.2
+    - TLSv1.3
+
+
+
   tomcat:
 
     #    connection-timeout: 20000
