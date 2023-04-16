@@ -83,7 +83,7 @@ public class WebController {
         JSONObject kakaoJson = new JSONObject(kakao);
 
         if (userService.getUserInfoId(kakaoJson).isEmpty())
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return ResponseEntity.badRequest().build();
 
         return userInfoJpa.findById(userService.getUserInfoId(kakaoJson).get())
                 .map(info -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"당신은\n" + info.getSchool().getSCHUL_NM() + "로 설정 되어 있습니다.", null).toString(), HttpStatus.OK))
@@ -211,7 +211,7 @@ public class WebController {
         log.info(request.getRemoteAddr());
 
         webClient = WebClient.builder()
-                .baseUrl("hrttps://geolocation.apigw.ntruss.com")
+                .baseUrl("https://geolocation.apigw.ntruss.com")
                 .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
                 .defaultHeader("x-ncp-iam-access-key",ApiKey.NcpAccessKey.getKey())
                 .defaultHeader("x-ncp-apigw-signature-v2",apiService.makeSignature(Long.toString(System.currentTimeMillis()),"GET","/geolocation/v2/geoLocation?ip="+ip+"&ext=t&responseFormatType=json"))
