@@ -47,7 +47,6 @@ class ApiService {
 
     private final SchoolJpa schoolJpa;
 
-    private static WebClient webClient;
 
     public Optional<URIBuilder> kakao(JSONObject KakaoObject,String id) {
 
@@ -74,15 +73,20 @@ class ApiService {
 
             case "내일" -> uriBuilder.addParameter("MLSV_YMD",TimeFormat(now.plusDays(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
-            case "이번주" -> uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(LocalDate.now(),DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+            case "이번주" -> uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                                       .addParameter("MLSV_TO_YMD",TimeFormat(now.plusWeeks(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+            case "다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(now.plusWeeks(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                                        .addParameter("MLSV_TO_YMD",TimeFormat(now.plusWeeks(2),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+            default -> uriBuilder.addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         }
         return Optional.of(uriBuilder);
     }
 
     public Mono<String> neisApi(String uri){
 
-        webClient = WebClient.builder()
+        WebClient webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
                 .build();
 
@@ -159,6 +163,10 @@ class ApiService {
         return jsonObject;
     }
 
+    public JSONArray schoolInfo(JSONArray jsonArray){
+        return jsonArray = jsonArray.getJSONObject(1).getJSONArray("row");
+    }
+
 
     public String FormatDietJson(String diet){
 
@@ -173,8 +181,7 @@ class ApiService {
 
             JSONArray jsonArray = jsonObject.getJSONArray("mealServiceDietInfo");
 
-            jsonObject = Objects.requireNonNull(jsonArray).getJSONObject(1);
-            jsonArray = jsonObject.getJSONArray("row");
+            jsonArray = schoolInfo(jsonArray);
 
             for (int i = 0; i < jsonArray.length(); i++) {
 
@@ -224,7 +231,7 @@ class ApiService {
 
     public void ncp(String content){
 
-        webClient = WebClient.builder()
+        WebClient webClient = WebClient.builder()
                 .baseUrl("https://sens.apigw.ntruss.com")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
@@ -293,8 +300,10 @@ class ApiService {
         }
 
         outputs.put(output);
+        output = null;
         jsonObject.put("version", "2.0");
         jsonObject.put("template", new JSONObject().put("outputs", outputs));
+        outputs = null;
 
         return jsonObject;
     }

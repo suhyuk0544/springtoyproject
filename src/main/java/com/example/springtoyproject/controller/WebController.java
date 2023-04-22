@@ -34,7 +34,7 @@ import java.util.Optional;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class WebController {
+public class WebController{
 
     private final UserService userService;
 
@@ -44,7 +44,7 @@ public class WebController {
 
     private final SchoolJpa schoolJpa;
 
-    private static WebClient webClient;
+//    private final WebClient webClient;
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
@@ -91,7 +91,7 @@ public class WebController {
     }
 
 
-    @Scheduled(cron = "0 0 9 * * 1-5",zone = "Asia/Seoul")
+//    @Scheduled(cron = "0 0 9 * * 1-5",zone = "Asia/Seoul")
     public void MyDiet(){
         try {
             URI uri = apiService.kakao(LocalDate.now()).build();
@@ -111,11 +111,13 @@ public class WebController {
 
         JSONObject request = apiService.FormatRequestKoGptJson((String) apiService.FormatKakaoBody(kakaoJson).get("sys_constant"));
 
-        webClient = WebClient.builder()
+        WebClient webClient = WebClient.builder()
                 .baseUrl("https://api.openai.com")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE,MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer " + ApiKey.OPENAIAPIKEY.getKey())
                 .build();
+
+
 
         return webClient.post()
                 .uri("/v1/completions")
@@ -149,37 +151,30 @@ public class WebController {
 
         JSONObject jsonObject = apiService.FormatKakaoBody(kakaoJson);
 
-        webClient = WebClient.builder()
+        WebClient webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
                 .build();
 
         return new ResponseEntity<>(
                 webClient.get()
-                .uri(uriBuilder -> uriBuilder
+                    .uri(uriBuilder -> uriBuilder
                         .path("/hub/schoolInfo")
                         .queryParam("SCHUL_NM", jsonObject.get("sys_constant"))
                         .queryParam("KEY", ApiKey.neiskey.getKey())
                         .queryParam("Type","json")
                         .queryParam("pIndex","1")
                         .build()
-                )
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(school_info -> {
-                    JSONObject school = new JSONObject(school_info);
+                    )
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .map(school_info -> {
+                        JSONObject school = new JSONObject(school_info);
 
-                    if (!school.has("schoolInfo"))
-                        return apiService.kakaoResponse(kakaoResponseType.simpleText,"그런 학교는 존재하지 않아요",null).toString();
+                        if (!school.has("schoolInfo"))
+                            return apiService.kakaoResponse(kakaoResponseType.simpleText,"그런 학교는 존재하지 않아요",null).toString();
 
-                    JSONArray jsonArray = school.getJSONArray("schoolInfo");
-
-                    school = jsonArray.getJSONObject(1);
-                    jsonArray = school.getJSONArray("row");
-
-                    httpSession.setAttribute("SchoolInfo",jsonArray);
-
-                    return apiService.kakaoResponse(kakaoResponseType.BasicCard,null,jsonArray).toString();
-                }),HttpStatus.OK);
+                        return apiService.kakaoResponse(kakaoResponseType.BasicCard,null,apiService.schoolInfo(school.getJSONArray("schoolInfo"))).toString();
+                    }),HttpStatus.OK);
     }
 
     @RequestMapping(value = "/KakaoBot/school/detail",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
@@ -210,7 +205,7 @@ public class WebController {
 
         log.info(request.getRemoteAddr());
 
-        webClient = WebClient.builder()
+        WebClient webClient = WebClient.builder()
                 .baseUrl("https://geolocation.apigw.ntruss.com")
                 .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
                 .defaultHeader("x-ncp-iam-access-key",ApiKey.NcpAccessKey.getKey())

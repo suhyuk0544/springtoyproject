@@ -72,7 +72,7 @@ Content-Type: application/json
   }
 }
 ###
-POST https://www.suhyuk0544.xyz/KakaoBot/school/detail
+POST https://localhost:8080/KakaoBot/school/detail
 Content-Type: application/json
 
 {
@@ -136,7 +136,7 @@ Content-Type: application/json
 }
 ###
 
-POST http://www.suhyuk0544.xyz:8080/KakaoBot/info/me
+POST https://www.suhyuk0544.xyz/KakaoBot/info/me
 Content-Type: application/json
 
 {
@@ -201,7 +201,7 @@ Content-Type: application/json
 
 ###
 
-POST http://www.suhyuk0544.xyz:8080/KakaoBot/school
+POST https://localhost:8080/KakaoBot/school
 Content-Type: application/json
 
 {
@@ -234,7 +234,7 @@ Content-Type: application/json
     "name": "g7qd4wfygz",
     "clientExtra": null,
     "params": {
-      "sys_constant": "고고"
+      "sys_constant": "양평고"
     },
     "id": "1vgk5w711t6l3sr6nixthi7c",
     "detailParams": {}
@@ -277,7 +277,7 @@ Content-Type: application/json
     "clientExtra": null,
     "params": {
       "sys_constant": "양평고",
-      "sys_date": "오늘"
+      "sys_date": "이번주"
     },
     "id": "1vgk5w711t6l3sr6nixthi7c",
     "detailParams": {}
