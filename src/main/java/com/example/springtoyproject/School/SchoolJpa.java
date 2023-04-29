@@ -17,6 +17,6 @@ public interface SchoolJpa extends JpaRepository<School,String> {
     @Query("select s from School s where s.SD_SCHUL_CODE = ?1")
     Optional<School> findBySD_SCHUL_CODE(String id);
 
-    Optional<School> findSchoolByUserInfosContaining(Collection<UserInfo> userInfos);
+
 
 }

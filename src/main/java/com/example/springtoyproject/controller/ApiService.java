@@ -163,8 +163,8 @@ class ApiService {
         return jsonObject;
     }
 
-    public JSONArray schoolInfo(JSONArray jsonArray){
-        return jsonArray = jsonArray.getJSONObject(1).getJSONArray("row");
+    public JSONArray schoolInfo(JSONArray jsonArray) {
+        return jsonArray.getJSONObject(1).getJSONArray("row");
     }
 
 

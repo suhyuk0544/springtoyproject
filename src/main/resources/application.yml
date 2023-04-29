@@ -34,29 +34,40 @@ spring:
 #    init:
 #      platform: h2
 
+
+
 server:
 
   port: 8080
+
 
   ssl:
     enabled: true
     key-password: suhyuk1027
     key-store-password: suhyuk1027
-    key-store: /spring/SSL/ssl.jks
+#    key-store: /spring/SSL/ssl.jks
 
     key-store-type: "JKS"
     enabled-protocols:
     - TLSv1.1
     - TLSv1.2
     - TLSv1.3
+    key-store: src/main/resources/spring/SSL/ssl.jks
 
 
 
   tomcat:
 
-    #    connection-timeout: 20000
+    connection-timeout: 5s
+    accept-count: 10
+    max-keep-alive-requests: 1
 
-    remoteip:
+    threads:
+      max: 100
+
+
+  remote:
+
 
       protocol-header:
 

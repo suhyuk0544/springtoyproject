@@ -123,6 +123,24 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <jvmArguments>
+                        -server
+
+                        -Xmx1024m
+                        –Xms1024m
+                        -XX:MaxNewSize=384m
+                        -XX:MaxPermSize=128m
+
+                        -XX:ParallelGCThreads=2
+                        -XX:-UseConcMarkSweepGC
+
+                        -XX:-PrintGC
+                        -XX:-PrintGCDetails
+                        -XX:-PrintGCTimeStamps
+                        -XX:-TraceClassUnloading
+                        -XX:-TraceClassLoading
+
+                    </jvmArguments>
                 </configuration>
             </plugin>
         </plugins>

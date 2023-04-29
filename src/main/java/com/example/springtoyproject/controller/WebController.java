@@ -145,7 +145,7 @@ public class WebController{
 
 
     @RequestMapping(value = "/KakaoBot/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Mono<String>> School(@RequestBody HashMap<String,Object> KakaoJson, HttpSession httpSession){
+    public ResponseEntity<Mono<String>> School(@RequestBody HashMap<String,Object> KakaoJson){
 
         JSONObject kakaoJson = new JSONObject(KakaoJson);
 
