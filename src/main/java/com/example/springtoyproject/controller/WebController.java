@@ -91,14 +91,11 @@ public class WebController{
     }
 
 
-//    @Scheduled(cron = "0 0 9 * * 1-5",zone = "Asia/Seoul")
-    public void MyDiet(){
+    @Scheduled(fixedDelay = 30 * 60 * 1000)
+    public void onApplicationEvent(){
         try {
-            URI uri = apiService.kakao(LocalDate.now()).build();
-
-            apiService.neisApi(uri.toString())
-                    .subscribe(apiService::ncp);
-
+            apiService.neisApi(apiService.kakao(LocalDate.now()).build().toString())
+                    .subscribe();
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }

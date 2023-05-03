@@ -52,7 +52,7 @@ server:
     - TLSv1.1
     - TLSv1.2
     - TLSv1.3
-    key-store: src/main/resources/spring/SSL/ssl.jks
+    key-store: /spring/SSL/ssl.jks
 
 
 
