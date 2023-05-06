@@ -274,29 +274,16 @@ class ApiService {
         JSONArray outputs = new JSONArray();
 
         switch (kakaoResponseType) {
-            case simpleText -> output.put("simpleText", new JSONObject().put("text", content));
+            case simpleText -> kakaoResponseType.getSimpleText(output,content);
 
-            case simpleImage -> output.put("simpleImage", new JSONObject().put("imageUrl", content));
+            case simpleImage -> kakaoResponseType.getSimpleImage(output,content);
 
             case BasicCard -> {
-                log.info(Objects.requireNonNull(jsonArray).toString());
-                JSONObject carousel = new JSONObject();
-                JSONArray items = new JSONArray();
-                carousel.put("type","basicCard");
-                carousel.put("items",items);
-
-                for (int i = 0; i < Objects.requireNonNull(jsonArray).length(); i++) {
-                    JSONObject basicCard = new JSONObject();
-                    basicCard.put("title",jsonArray.getJSONObject(i).getString("SCHUL_NM"));
-                    basicCard.put("description",jsonArray.getJSONObject(i).getString("ORG_RDNMA"));
-                    basicCard.put("thumbnail", new JSONObject().put("imageUrl","https://t1.kakaocdn.net/kakaocorp/about/OpenBuilder/builder_logo.png"));
-                    basicCard.put("buttons", new JSONArray().put(new JSONObject().put("action", "block").put("label", "등록").put("blockId","63ef5f200035284b215abadf").put("extra",jsonArray.getJSONObject(i)) .put("messageText",jsonArray.getJSONObject(i).getString("SCHUL_NM"))));
-                    items.put(basicCard);
-                    log.info(items.toString());
-                }
-                output.put("carousel",carousel);
+                kakaoResponseType.getBasicCard(output,jsonArray);
+                kakaoResponseType.setQuickReplies(output,"취소","63ef494c6c60585592800189");
             }
-            default -> output.put("simpleText", new JSONObject().put("text", "지원하지 않는 응답 유형입니다."));
+
+            default -> kakaoResponseType.getSimpleText(output,"지원하지 않는 응답 유형입니다.");
         }
 
         outputs.put(output);
