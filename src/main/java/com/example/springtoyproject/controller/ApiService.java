@@ -6,6 +6,7 @@ import com.example.springtoyproject.UserInfo.Auth;
 import com.example.springtoyproject.UserInfo.UserInfo;
 import com.example.springtoyproject.UserInfo.UserInfoJpa;
 import com.example.springtoyproject.config.ApiKey;
+import com.example.springtoyproject.config.kakaoResponseType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -267,11 +268,12 @@ class ApiService {
         return targetStr.replaceAll("(\r\n|\r|\n|\n\r)", "");
     }
 
-    public JSONObject kakaoResponse(kakaoResponseType kakaoResponseType,@Nullable String content,@Nullable JSONArray jsonArray){ // 메서드 고쳐야 됨!!
+    public JSONObject kakaoResponse(kakaoResponseType kakaoResponseType, @Nullable String content, @Nullable JSONArray jsonArray){ // 메서드 고쳐야 됨!!
 
         JSONObject jsonObject = new JSONObject();
         JSONObject output = new JSONObject();
         JSONArray outputs = new JSONArray();
+        JSONArray quickReplies = new JSONArray();
 
         switch (kakaoResponseType) {
             case simpleText -> kakaoResponseType.getSimpleText(output,content);
@@ -280,17 +282,15 @@ class ApiService {
 
             case BasicCard -> {
                 kakaoResponseType.getBasicCard(output,jsonArray);
-                kakaoResponseType.setQuickReplies(output,"취소","63ef494c6c60585592800189");
+                kakaoResponseType.setQuickReplies(quickReplies,"63ef494c6c60585592800189","취소");
             }
 
             default -> kakaoResponseType.getSimpleText(output,"지원하지 않는 응답 유형입니다.");
         }
 
         outputs.put(output);
-        output = null;
         jsonObject.put("version", "2.0");
-        jsonObject.put("template", new JSONObject().put("outputs", outputs));
-        outputs = null;
+        jsonObject.put("template",new JSONObject().put("outputs", outputs).put("quickReplies",quickReplies));
 
         return jsonObject;
     }

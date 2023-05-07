@@ -1,10 +1,10 @@
 package com.example.springtoyproject.controller;
 
 import com.example.springtoyproject.School.SchoolJpa;
-import com.example.springtoyproject.UserInfo.UserInfo;
 import com.example.springtoyproject.UserInfo.UserInfoJpa;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
+import com.example.springtoyproject.config.kakaoResponseType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
@@ -18,7 +18,6 @@ import reactor.core.publisher.Mono;
 
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
