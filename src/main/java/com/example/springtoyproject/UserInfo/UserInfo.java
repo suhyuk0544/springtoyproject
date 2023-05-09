@@ -43,12 +43,13 @@ public class UserInfo {
     }
 
     @Transactional
-    public <T> void update(T var){ // 이걸로 Setter 없앤다 private set 메서드를 만들어서 외부에서 함부로 사용 할 수 없도록
+    public <E> void update(E var){ // 이걸로 Setter 없앤다 private set 메서드를 만들어서 외부에서 함부로 사용 할 수 없도록
 
-        if (var instanceof Auth)
+        if (var instanceof Auth) {
             setAuth((Auth) var);
-        else if (var instanceof School)
+        }else if (var instanceof School) {
             setSchool((School) var);
+        }
 
     }
 
@@ -68,9 +69,9 @@ public class UserInfo {
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof UserInfo userInfo))
+        if (!(o instanceof UserInfo))
             return false;
-        return userid.equals(userInfo.userid);
+        return userid.equals(((UserInfo) o).getUserid());
     }
 
     @Override

@@ -20,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
@@ -276,16 +277,15 @@ class ApiService {
         JSONArray quickReplies = new JSONArray();
 
         switch (kakaoResponseType) {
-            case simpleText -> kakaoResponseType.getSimpleText(output,content);
+            case simpleText -> kakaoResponseType.getResponse(output,content);
 
-            case simpleImage -> kakaoResponseType.getSimpleImage(output,content);
+            case simpleImage -> kakaoResponseType.getResponse(output,content);
 
             case BasicCard -> {
-                kakaoResponseType.getBasicCard(output,jsonArray);
                 kakaoResponseType.setQuickReplies(quickReplies,"63ef494c6c60585592800189","취소");
             }
 
-            default -> kakaoResponseType.getSimpleText(output,"지원하지 않는 응답 유형입니다.");
+            default -> kakaoResponseType.getResponse(output,"지원하지 않는 응답 유형입니다.");
         }
 
         outputs.put(output);
