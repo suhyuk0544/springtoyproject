@@ -5,6 +5,7 @@ import com.example.springtoyproject.School.SchoolJpa;
 import com.example.springtoyproject.UserInfo.Auth;
 import com.example.springtoyproject.UserInfo.UserInfo;
 import com.example.springtoyproject.UserInfo.UserInfoJpa;
+import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
 import com.example.springtoyproject.config.kakaoResponseType;
 import lombok.RequiredArgsConstructor;
@@ -49,15 +50,17 @@ class ApiService {
 
     private final SchoolJpa schoolJpa;
 
+    private final UserService userService;
+
 
     public Optional<URIBuilder> kakao(JSONObject KakaoObject,String id) {
 
-        Optional<UserInfo> userInfo = userInfoJpa.findById(id); //이 부분부터
+//        UserInfo userInfo = userService.getUserInfo(id); //이 부분부터
 
-        if (userInfo.isEmpty()) // 이 부분까지 메서드 처리
+        School school = userService.getSchoolByUserInfo(id);
+
+        if (school.isEmpty()) // 이 부분까지 메서드 처리
             return Optional.empty();
-
-        School school = userInfo.get().getSchool();
 
         URIBuilder uriBuilder = new URIBuilder();
         uriBuilder.setPath("/hub/mealServiceDietInfo")
@@ -283,6 +286,7 @@ class ApiService {
 
             case BasicCard -> {
                 kakaoResponseType.setQuickReplies(quickReplies,"63ef494c6c60585592800189","취소");
+
             }
 
             default -> kakaoResponseType.getResponse(output,"지원하지 않는 응답 유형입니다.");

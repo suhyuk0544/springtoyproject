@@ -54,6 +54,12 @@ public class School {
         return Objects.hash(SD_SCHUL_CODE);
     }
 
+
+    public boolean isEmpty(){
+        return SD_SCHUL_CODE == null;
+    }
+
+
     @Override
     public String toString() {
         return SD_SCHUL_CODE != null ? "School{" +
