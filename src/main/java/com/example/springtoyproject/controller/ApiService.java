@@ -57,34 +57,30 @@ class ApiService {
 
 //        UserInfo userInfo = userService.getUserInfo(id); //이 부분부터
 
-        School school = userService.getSchoolByUserInfo(id);
-
-        if (school.isEmpty()) // 이 부분까지 메서드 처리
-            return Optional.empty();
+        School school = userService.getSchoolByUserInfo(id).orElseThrow();
 
         URIBuilder uriBuilder = new URIBuilder();
         uriBuilder.setPath("/hub/mealServiceDietInfo")
                 .addParameter("KEY", ApiKey.neiskey.getKey())
-                .addParameter("Type","json")
-                .addParameter("pIndex","1")
-                .addParameter("ATPT_OFCDC_SC_CODE",school.getATPT_OFCDC_SC_CODE())
-                .addParameter("SD_SCHUL_CODE",school.getSD_SCHUL_CODE());
+                .addParameter("Type", "json")
+                .addParameter("pIndex", "1")
+                .addParameter("ATPT_OFCDC_SC_CODE", school.getATPT_OFCDC_SC_CODE())
+                .addParameter("SD_SCHUL_CODE", school.getSD_SCHUL_CODE());
 
-        JSONObject jsonObject = FormatKakaoBody(KakaoObject);
         LocalDate now = LocalDate.now();
 
-        switch (jsonObject.getString("sys_date")) {
-            case "오늘" -> uriBuilder.addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        switch (FormatKakaoBodyDetail(KakaoObject).getString("origin").replace(" ","")) {
+            case "오늘" -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
-            case "내일" -> uriBuilder.addParameter("MLSV_YMD",TimeFormat(now.plusDays(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            case "내일" -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now.plusDays(1), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
-            case "이번주" -> uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                                      .addParameter("MLSV_TO_YMD",TimeFormat(now.plusWeeks(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            case "이번주" -> uriBuilder.addParameter("MLSV_FROM_YMD", TimeFormat(now, DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                        .addParameter("MLSV_TO_YMD", TimeFormat(now.plusWeeks(1), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
-            case "다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD",TimeFormat(now.plusWeeks(1),DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                                        .addParameter("MLSV_TO_YMD",TimeFormat(now.plusWeeks(2),DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            case "다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD", TimeFormat(now.plusWeeks(1), DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                        .addParameter("MLSV_TO_YMD", TimeFormat(now.plusWeeks(2), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
-            default -> uriBuilder.addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            default -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         }
         return Optional.of(uriBuilder);
     }
@@ -168,6 +164,13 @@ class ApiService {
         return jsonObject;
     }
 
+    public JSONObject FormatKakaoBodyDetail(JSONObject kakaoObject){
+
+        Objects.requireNonNull(kakaoObject);
+
+        return kakaoObject.getJSONObject("action").getJSONObject("detailParams").getJSONObject("sys_date");
+    }
+
     public JSONArray schoolInfo(JSONArray jsonArray) {
         return jsonArray.getJSONObject(1).getJSONArray("row");
     }
@@ -192,7 +195,7 @@ class ApiService {
 
                 jsonObject = jsonArray.getJSONObject(i);
 
-                sb.append(MakeFormat(((String) jsonObject.get("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()));
+                sb.append(MakeFormat((jsonObject.getString("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()));
             }
 
         }else {
@@ -203,13 +206,13 @@ class ApiService {
     }
 
 
-    public String TimeFormat(JSONObject jsonObject){
-
-        LocalDate now = LocalDate.parse((String) jsonObject.get("date"), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-
-        return now.format(formatter);
-    }
+//    public String TimeFormat(JSONObject jsonObject){
+//
+//        LocalDate now = LocalDate.parse((String) jsonObject.get("date"), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+//
+//        return now.format(formatter);
+//    }
 
     public String TimeFormat(LocalDate localDate,DateTimeFormatter dateTimeFormatter){
 
@@ -219,18 +222,19 @@ class ApiService {
         return now.format(formatter);
     }
 
-    public JSONObject SchoolSelect(String SCHUL_NM,JSONArray jsonArray){
 
-        JSONObject jsonObject = new JSONObject();
-
-         for (int i = 0; i <= jsonArray.length(); i++) {
-            jsonObject = jsonArray.getJSONObject(i);
-            if (jsonObject.getString("SCHUL_NM").equals(SCHUL_NM))
-                return jsonObject;
-        }
-
-        return null;
-    }
+//    public JSONObject SchoolSelect(String SCHUL_NM,JSONArray jsonArray){
+//
+//        JSONObject jsonObject = new JSONObject();
+//
+//         for (int i = 0; i <= jsonArray.length(); i++) {
+//            jsonObject = jsonArray.getJSONObject(i);
+//            if (jsonObject.getString("SCHUL_NM").equals(SCHUL_NM))
+//                return jsonObject;
+//        }
+//
+//        return null;
+//    }
 
 
 
@@ -277,24 +281,35 @@ class ApiService {
         JSONObject jsonObject = new JSONObject();
         JSONObject output = new JSONObject();
         JSONArray outputs = new JSONArray();
-        JSONArray quickReplies = new JSONArray();
+//        JSONArray quickReplies = new JSONArray();
 
         switch (kakaoResponseType) {
-            case simpleText -> kakaoResponseType.getResponse(output,content);
+            case simpleText -> output.put("simpleText",new JSONObject().put("text",content));
 
-            case simpleImage -> kakaoResponseType.getResponse(output,content);
+            case simpleImage -> output.put("simpleImage", new JSONObject().put("imageUrl", content));
 
             case BasicCard -> {
-                kakaoResponseType.setQuickReplies(quickReplies,"63ef494c6c60585592800189","취소");
+                JSONObject carousel = new JSONObject();
+                JSONArray items = new JSONArray();
+                carousel.put("type", "basicCard");
+                carousel.put("items", items);
 
+                for (int i = 0; i < Objects.requireNonNull(jsonArray).length(); i++) {
+                    JSONObject basicCard = new JSONObject();
+                    basicCard.put("title", jsonArray.getJSONObject(i).getString("SCHUL_NM"))
+                            .put("description", jsonArray.getJSONObject(i).getString("ORG_RDNMA"))
+                            .put("thumbnail", new JSONObject().put("imageUrl", "https://t1.kakaocdn.net/kakaocorp/about/OpenBuilder/builder_logo.png"))
+                            .put("buttons",new JSONArray().put(new JSONObject().put("action", "block").put("label", "등록").put("blockId", "63ef5f200035284b215abadf").put("extra", jsonArray.getJSONObject(i)).put("messageText", jsonArray.getJSONObject(i).getString("SCHUL_NM"))));
+                    items.put(basicCard);
+                }
+                output.put("carousel", carousel);
             }
-
             default -> kakaoResponseType.getResponse(output,"지원하지 않는 응답 유형입니다.");
         }
 
         outputs.put(output);
         jsonObject.put("version", "2.0");
-        jsonObject.put("template",new JSONObject().put("outputs", outputs).put("quickReplies",quickReplies));
+        jsonObject.put("template",new JSONObject().put("outputs", outputs));
 
         return jsonObject;
     }
@@ -302,7 +317,6 @@ class ApiService {
 
 
     public StringBuilder MakeFormat(@Nullable String content,@Nullable String date){
-
 
         StringBuilder sb = new StringBuilder();
 

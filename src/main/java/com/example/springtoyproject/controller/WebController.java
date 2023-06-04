@@ -25,10 +25,7 @@ import java.net.URISyntaxException;
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @Slf4j
@@ -59,16 +56,23 @@ public class WebController{
 
             Optional<URIBuilder> uriBuilder = apiService.kakao(kakaoJson,userService.getUserInfoId(kakaoJson).get());
 
+//            if (uriBuilder.isEmpty())
+//                return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
+//                                                .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
             if (uriBuilder.isEmpty())
-                return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
+                return new ResponseEntity<>(Mono.just("에러가 발생 했습니다")
                                                 .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
             uri = uriBuilder.get().build();
+
         } catch (URISyntaxException e) {
             return ResponseEntity.badRequest().build();
+        } catch (NoSuchElementException e){
+            return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
+                    .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
         }
 
 
-        return new ResponseEntity<>(apiService.neisApi(Objects.requireNonNull(uri).toString())
+        return new ResponseEntity<>(apiService.neisApi(uri.toString())
                 .map(diet -> {
                     JSONObject response = apiService.kakaoResponse(kakaoResponseType.simpleText,diet,null);
 
