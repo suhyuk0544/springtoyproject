@@ -21,7 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
-import org.springframework.util.ObjectUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
@@ -69,16 +68,21 @@ class ApiService {
 
         LocalDate now = LocalDate.now();
 
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
         switch (FormatKakaoBodyDetail(KakaoObject).getString("origin").replace(" ","")) {
-            case "오늘" -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            case "오늘" -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now,dateTimeFormatter));
 
-            case "내일" -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now.plusDays(1), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            case "내일" -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now.plusDays(1), dateTimeFormatter));
 
-            case "이번주" -> uriBuilder.addParameter("MLSV_FROM_YMD", TimeFormat(now, DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                        .addParameter("MLSV_TO_YMD", TimeFormat(now.plusWeeks(1), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            case "이번주" -> uriBuilder.addParameter("MLSV_FROM_YMD", TimeFormat(now,dateTimeFormatter))
+                        .addParameter("MLSV_TO_YMD", TimeFormat(now.plusWeeks(1), dateTimeFormatter));
 
-            case "다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD", TimeFormat(now.plusWeeks(1), DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-                        .addParameter("MLSV_TO_YMD", TimeFormat(now.plusWeeks(2), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            case "다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD", TimeFormat(now.plusWeeks(1), dateTimeFormatter))
+                        .addParameter("MLSV_TO_YMD", TimeFormat(now.plusWeeks(2), dateTimeFormatter));
+
+            case "다다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD", TimeFormat(now.plusWeeks(2),dateTimeFormatter))
+                        .addParameter("MLSV_TO_YMD", TimeFormat(now.plusWeeks(3),dateTimeFormatter));
 
             default -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         }
