@@ -36,7 +36,7 @@ public class WebController{
 
     private final ApiService apiService;
 
-//    private final WebClient webClient;
+    private final WebClient webClient;
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
@@ -74,7 +74,8 @@ public class WebController{
                     JSONObject response = apiService.kakaoResponse(kakaoResponseType.simpleText,diet,null);
 
                     return response.toString();
-                }),HttpStatus.OK);
+                })
+                ,HttpStatus.OK);
     }
 
     @RequestMapping(value = "/KakaoBot/info/me", method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
