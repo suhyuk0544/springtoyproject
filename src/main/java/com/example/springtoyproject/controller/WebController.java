@@ -36,13 +36,9 @@ public class WebController{
 
     private final UserService userService;
 
-    private final UserInfoJpa userInfoJpa;
-
     private final ApiService apiService;
 
-    private final SchoolJpa schoolJpa;
-
-//    private final WebClient webClient;
+    private final WebClient webClient;
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
@@ -80,7 +76,8 @@ public class WebController{
                     JSONObject response = apiService.kakaoResponse(kakaoResponseType.simpleText,diet,null);
 
                     return response.toString();
-                }),HttpStatus.OK);
+                })
+                ,HttpStatus.OK);
     }
 
     @RequestMapping(value = "/KakaoBot/info/me", method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
@@ -91,9 +88,9 @@ public class WebController{
         if (userService.getUserInfoId(kakaoJson).isEmpty())
             return ResponseEntity.badRequest().build();
 
-        return userInfoJpa.findById(userService.getUserInfoId(kakaoJson).get())
-                .map(info -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"당신은\n" + info.getSchool().getSCHUL_NM() + "로 설정 되어 있습니다.", null).toString(), HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText, "유저 정보가 없습니다", null).toString(), HttpStatus.OK));
+        return userService.getUserInfo(userService.getUserInfoId(kakaoJson).get())
+                    .map(info -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"당신은\n" + info.getSchool().getSCHUL_NM() + "로 설정 되어 있습니다.", null).toString(), HttpStatus.OK))
+                    .orElseGet(() -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText, "유저 정보가 없습니다", null).toString(), HttpStatus.OK));
     }
 
 
@@ -279,7 +276,7 @@ public class WebController{
 
 //        OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, (String) Objects.requireNonNull(response).get("access_token"),null,null,null);
 
-        log.info("{}",response.get("expires_in"));
+//        log.info("{}",response.get("expires_in"));
 
         return "redirect:/main";
     }
