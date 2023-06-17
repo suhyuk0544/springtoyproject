@@ -14,6 +14,7 @@ import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.suhyuk.Response.BasicCard;
 import reactor.core.publisher.Mono;
 
 
@@ -26,6 +27,7 @@ import java.net.URISyntaxException;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.*;
+
 
 @RestController
 @Slf4j
@@ -49,7 +51,7 @@ public class WebController{
 
         log.info(kakaoJson.toString());
 
-        URI uri = null;
+        URI uri;
         try {
             if (userService.getUserInfoId(kakaoJson).isEmpty())
                 return ResponseEntity.badRequest().build();
@@ -70,6 +72,7 @@ public class WebController{
             return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
                     .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
         }
+
 
 
         return new ResponseEntity<>(apiService.neisApi(uri.toString())

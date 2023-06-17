@@ -21,7 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
-import org.springframework.util.ObjectUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
@@ -328,6 +327,7 @@ class ApiService {
 
         boolean r = true;
         String w = "";
+
         for (int i = 0; i < content.length(); i++) {
             String q = String.valueOf(content.charAt(i));
             if (!q.equals(" ")) {
