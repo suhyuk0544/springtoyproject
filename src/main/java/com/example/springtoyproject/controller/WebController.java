@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.suhyuk.Response.BasicCard;
+import org.suhyuk.Response.SimpleText;
 import reactor.core.publisher.Mono;
 
 
@@ -38,7 +39,8 @@ public class WebController{
 
     private final ApiService apiService;
 
-    private final WebClient webClient;
+
+//    private final WebClient webClient;
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
@@ -66,9 +68,8 @@ public class WebController{
             return ResponseEntity.badRequest().build();
         } catch (NoSuchElementException e){
             return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
-                    .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
+                    .map(text -> new SimpleText().setText(text).createMainJsonObject().toString()),HttpStatus.OK);
         }
-
 
 
         return new ResponseEntity<>(apiService.neisApi(uri.toString())
@@ -88,9 +89,11 @@ public class WebController{
         if (userService.getUserInfoId(kakaoJson).isEmpty())
             return ResponseEntity.badRequest().build();
 
+        SimpleText simpleText = new SimpleText();
+
         return userService.getUserInfo(userService.getUserInfoId(kakaoJson).get())
-                    .map(info -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"당신은\n" + info.getSchool().getSCHUL_NM() + "로 설정 되어 있습니다.", null).toString(), HttpStatus.OK))
-                    .orElseGet(() -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText, "유저 정보가 없습니다", null).toString(), HttpStatus.OK));
+                    .map(info -> new ResponseEntity<>(simpleText.setText("당신은 " + info.getSchool().getSCHUL_NM() + "로 설정 되어 있습니다.").createMainJsonObject().toString(), HttpStatus.OK))
+                    .orElseGet(() -> new ResponseEntity<>(simpleText.setText("유저 정보가 없습니다").createMainJsonObject().toString(), HttpStatus.OK));
     }
 
 
@@ -193,7 +196,7 @@ public class WebController{
 
         apiService.nullCheck(json.getJSONObject("action").getJSONObject("clientExtra"),str.get());
 
-        return new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"저장 되었습니다",null).toString(),HttpStatus.OK);
+        return new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"저장 되었습니다",null).toString(),HttpStatus.CREATED);
     }
 
     @GetMapping("/main/geoLocation")

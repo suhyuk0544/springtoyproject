@@ -16,7 +16,7 @@ public enum kakaoResponseType {
             output.put("simpleImage", new JSONObject().put("imageUrl", contents));
         }
     },
-    BasicCard{ // 전략 열거 타입 사용해서 Card 하고 일반 Response 분리 해야함
+    BasicCard{
         @Override
         public void getResponse(JSONObject output, String...contents) {
 
