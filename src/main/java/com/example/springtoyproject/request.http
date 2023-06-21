@@ -32,7 +32,7 @@ Content-Type: application/json
 
 ###
 
-POST http://localhost:8080/KakaoBot/school/detail
+POST https://localhost:8080/KakaoBot/school/detail
 Content-Type: application/json
 
 {
@@ -71,6 +71,7 @@ Content-Type: application/json
     "detailParams": {}
   }
 }
+
 ###
 POST https://localhost:8080/KakaoBot/school/detail
 Content-Type: application/json
@@ -201,7 +202,7 @@ Content-Type: application/json
 
 ###
 
-POST https://www.suhyuk0544.xyz/KakaoBot/school
+POST https://localhost:8080/KakaoBot/school
 Content-Type: application/json
 
 {
@@ -234,15 +235,15 @@ Content-Type: application/json
     "name": "g7qd4wfygz",
     "clientExtra": null,
     "params": {
-      "sys_constant": "양일고"
+      "sys_constant": "양평고"
     },
     "id": "1vgk5w711t6l3sr6nixthi7c",
     "detailParams": {}
   }
 }
 
-###
 
+###
 POST https://localhost:8080/KakaoBot/diet
 Content-Type: application/json
 
@@ -276,8 +277,60 @@ Content-Type: application/json
     "name": "g7qd4wfygz",
     "clientExtra": null,
     "params": {
+      "sys_constant": "양평고"
+    },
+    "id": "1vgk5w711t6l3sr6nixthi7c",
+    "detailParams": {
+      "sys_date": {
+        "value": "sys.date",
+        "groupName": "",
+        "origin": "오늘"
+      }
+    }
+  }
+}
+
+###
+POST https://localhost:8080/KakaoBot/diet
+Content-Type: application/json
+
+{
+  "intent": {
+    "id": "gmucdqb8c45fnpd0rr3krhdr",
+    "name": "블록 이름"
+  },
+  "userRequest": {
+    "timezone": "Asia/Seoul",
+    "params": {
+      "ignoreMe": "true"
+    },
+    "block": {
+      "id": "gmucdqb8c45fnpd0rr3krhdr",
+      "name": "블록 이름"
+    },
+    "utterance": "발화 내용",
+    "lang": null,
+    "user": {
+      "id": "512368",
+      "type": "accountId",
+      "properties": {}
+    }
+  },
+  "bot": {
+    "id": "63ef45221727873452d80b45",
+    "name": "봇 이름"
+  },
+  "action": {
+    "name": "g7qd4wfygz",
+    "clientExtra": null,
+
+    "detailParams": {
       "sys_constant": "양평고",
-      "sys_date": "이번주"
+      "sys_date": {
+        "value":"sys.date",
+        "groupName":"",
+        "origin":"오늘"
+      }
     },
     "id": "1vgk5w711t6l3sr6nixthi7c",
     "detailParams": {}
