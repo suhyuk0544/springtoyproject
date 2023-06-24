@@ -20,7 +20,7 @@ spring:
 #      path: /h2-console
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: true

@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.suhyuk.Response.BasicCard;
+import org.suhyuk.Response.SimpleText;
 import reactor.core.publisher.Mono;
 
 
@@ -66,7 +67,7 @@ public class WebController{
             return ResponseEntity.badRequest().build();
         } catch (NoSuchElementException e){
             return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
-                    .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
+                    .map(text -> new SimpleText().setText(text).createMainJsonObject().toString()),HttpStatus.OK);
         }
 
 
@@ -88,13 +89,15 @@ public class WebController{
         if (userService.getUserInfoId(kakaoJson).isEmpty())
             return ResponseEntity.badRequest().build();
 
+        SimpleText simpleText = new SimpleText();
+
         return userService.getUserInfo(userService.getUserInfoId(kakaoJson).get())
-                    .map(info -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"당신은\n" + info.getSchool().getSCHUL_NM() + "로 설정 되어 있습니다.", null).toString(), HttpStatus.OK))
-                    .orElseGet(() -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText, "유저 정보가 없습니다", null).toString(), HttpStatus.OK));
+                    .map(info -> new ResponseEntity<>(simpleText.setText("당신은" + info.getSchool().getSCHUL_NM() + "로 \n설정 되어 있습니다.").createMainJsonObject().toString(), HttpStatus.OK))
+                    .orElseGet(() -> new ResponseEntity<>(simpleText.setText("유저 정보가 없습니다").createMainJsonObject().toString(), HttpStatus.OK));
     }
 
 
-//    @Scheduled(fixedDelay = 30 * 60 * 1000)
+    @Scheduled(fixedDelay = 30 * 60 * 1000)
     public void onApplicationEvent(){
         try {
             apiService.neisApi(apiService.kakao(LocalDate.now()).build().toString())
@@ -171,7 +174,7 @@ public class WebController{
                         JSONObject school = new JSONObject(school_info);
 
                         if (!school.has("schoolInfo"))
-                            return apiService.kakaoResponse(kakaoResponseType.simpleText,"그런 학교는 존재하지 않아요",null).toString();
+                            return new SimpleText().setText("그런 학교는 존재하지 않아요").toString();
 
                         return apiService.kakaoResponse(kakaoResponseType.BasicCard,null,apiService.schoolInfo(school.getJSONArray("schoolInfo"))).toString();
                     }),HttpStatus.OK);

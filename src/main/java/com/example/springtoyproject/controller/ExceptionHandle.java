@@ -16,10 +16,8 @@ public class ExceptionHandle {
     public ResponseEntity<String> customRuntimeException(){
 
         JSONObject simpleText = new SimpleText()
-                .setText("오류가 발생")
-                .createJSON();
-
-        simpleText = SimpleText.mainJsonObject(SkillVersion.VERSION2.getVersion(),new JSONArray().put(simpleText),null);
+                .setText("오류가 발생 했습니다.")
+                .createMainJsonObject();
 
         return new ResponseEntity<>(simpleText.toString(),HttpStatus.SERVICE_UNAVAILABLE);
     }
