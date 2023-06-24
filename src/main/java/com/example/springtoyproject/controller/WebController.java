@@ -15,7 +15,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.suhyuk.Response.BasicCard;
-import org.suhyuk.Response.SimpleText;
 import reactor.core.publisher.Mono;
 
 
@@ -39,7 +38,6 @@ public class WebController{
 
     private final ApiService apiService;
 
-
 //    private final WebClient webClient;
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
@@ -60,7 +58,7 @@ public class WebController{
 //                return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
 //                                                .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
             if (uriBuilder.isEmpty())
-                return new ResponseEntity<>(Mono.just("에러가 발생 했습니다")
+                return new ResponseEntity<>(Mono.just("유저 정보는 있으나 다른 데이터가 문제 있습니다")
                                                 .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
             uri = uriBuilder.get().build();
 
@@ -68,8 +66,9 @@ public class WebController{
             return ResponseEntity.badRequest().build();
         } catch (NoSuchElementException e){
             return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
-                    .map(text -> new SimpleText().setText(text).createMainJsonObject().toString()),HttpStatus.OK);
+                    .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
         }
+
 
 
         return new ResponseEntity<>(apiService.neisApi(uri.toString())
@@ -89,15 +88,13 @@ public class WebController{
         if (userService.getUserInfoId(kakaoJson).isEmpty())
             return ResponseEntity.badRequest().build();
 
-        SimpleText simpleText = new SimpleText();
-
         return userService.getUserInfo(userService.getUserInfoId(kakaoJson).get())
-                    .map(info -> new ResponseEntity<>(simpleText.setText("당신은 " + info.getSchool().getSCHUL_NM() + "로 설정 되어 있습니다.").createMainJsonObject().toString(), HttpStatus.OK))
-                    .orElseGet(() -> new ResponseEntity<>(simpleText.setText("유저 정보가 없습니다").createMainJsonObject().toString(), HttpStatus.OK));
+                    .map(info -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText,"당신은\n" + info.getSchool().getSCHUL_NM() + "로 설정 되어 있습니다.", null).toString(), HttpStatus.OK))
+                    .orElseGet(() -> new ResponseEntity<>(apiService.kakaoResponse(kakaoResponseType.simpleText, "유저 정보가 없습니다", null).toString(), HttpStatus.OK));
     }
 
 
-    @Scheduled(fixedDelay = 30 * 60 * 1000)
+//    @Scheduled(fixedDelay = 30 * 60 * 1000)
     public void onApplicationEvent(){
         try {
             apiService.neisApi(apiService.kakao(LocalDate.now()).build().toString())
