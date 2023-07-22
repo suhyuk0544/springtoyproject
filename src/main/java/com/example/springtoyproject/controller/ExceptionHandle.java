@@ -22,12 +22,16 @@ public class ExceptionHandle {
 
     @Autowired
     @Qualifier("jsonFactory")
-    private KakaoChatBotResponseJSONFactory JsonFactory;
+    private KakaoChatBotResponseJSONFactory jsonFactory;
+
+    @Autowired
+    @Qualifier("commonElement")
+    private KakaoChatBotResponseJSONFactory commonElement;
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> customRuntimeException(){
 
-        JSONObject response = ((SimpleText) JsonFactory.createJSON(KakaoChatBotResponseType.SimpleText))
+        JSONObject response = ((SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText))
                 .setText("오류가 발생 했습니다.")
                 .createMainJsonObject();
 
