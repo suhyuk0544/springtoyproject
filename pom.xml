@@ -16,6 +16,10 @@
     <description>springtoyproject</description>
     <properties>
         <java.version>17</java.version>
+
+
+        <webapp.lib>C:\Users\장유혁\IdeaProjects\KakaoBusinessChatBotResponse\target\KakaoChatBotResponse-1.0-SNAPSHOT.jar</webapp.lib>
+
     </properties>
     <dependencies>
         <dependency>
@@ -107,6 +111,14 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.suhyuk</groupId>
+            <artifactId>KakaoChatBotResponse-1.0-SNAPSHOT</artifactId>
+            <version>whatever</version>
+            <scope>system</scope>
+            <systemPath>${webapp.lib}</systemPath>
         </dependency>
 
     </dependencies>

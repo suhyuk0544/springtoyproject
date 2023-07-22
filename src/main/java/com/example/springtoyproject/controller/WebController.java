@@ -4,16 +4,21 @@ import com.example.springtoyproject.School.SchoolJpa;
 import com.example.springtoyproject.UserInfo.UserInfoJpa;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
+import com.example.springtoyproject.config.WebConfig;
 import com.example.springtoyproject.config.kakaoResponseType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.suhyuk.Interface.KakaoChatBotResponseJSONFactory;
+import org.suhyuk.Interface.KakaoChatBotResponseType;
 import org.suhyuk.Response.BasicCard;
 import org.suhyuk.Response.SimpleText;
 import reactor.core.publisher.Mono;
@@ -32,12 +37,23 @@ import java.util.*;
 
 @RestController
 @Slf4j
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class WebController{
 
-    private final UserService userService;
+    @Autowired
+    private UserService userService;
 
-    private final ApiService apiService;
+    @Autowired
+    private ApiService apiService;
+
+    @Autowired
+    @Qualifier("jsonFactory")
+    private KakaoChatBotResponseJSONFactory jsonFactory;
+
+    @Autowired
+    @Qualifier("commonElement")
+    private KakaoChatBotResponseJSONFactory commonElement;
+
 
 //    private final WebClient webClient;
 
@@ -67,9 +83,8 @@ public class WebController{
             return ResponseEntity.badRequest().build();
         } catch (NoSuchElementException e){
             return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
-                    .map(text -> new SimpleText().setText(text).createMainJsonObject().toString()),HttpStatus.OK);
+                    .map(text -> ((SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText)).setText(text).createMainJsonObject().toString()),HttpStatus.OK);
         }
-
 
 
         return new ResponseEntity<>(apiService.neisApi(uri.toString())
@@ -89,7 +104,7 @@ public class WebController{
         if (userService.getUserInfoId(kakaoJson).isEmpty())
             return ResponseEntity.badRequest().build();
 
-        SimpleText simpleText = new SimpleText();
+        SimpleText simpleText = (SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText);
 
         return userService.getUserInfo(userService.getUserInfoId(kakaoJson).get())
                     .map(info -> new ResponseEntity<>(simpleText.setText("당신은" + info.getSchool().getSCHUL_NM() + "로 \n설정 되어 있습니다.").createMainJsonObject().toString(), HttpStatus.OK))
