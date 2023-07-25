@@ -40,19 +40,27 @@ import java.util.*;
 //@RequiredArgsConstructor
 public class WebController{
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    private final ApiService apiService;
+
+    private final KakaoChatBotResponseJSONFactory jsonFactory;
+
+    private final KakaoChatBotResponseJSONFactory commonElement;
+
 
     @Autowired
-    private ApiService apiService;
+    public WebController(UserService userService,ApiService apiService,@Qualifier("jsonFactory") KakaoChatBotResponseJSONFactory jsonFactory,@Qualifier("commonElement") KakaoChatBotResponseJSONFactory commonElement){
 
-    @Autowired
-    @Qualifier("jsonFactory")
-    private KakaoChatBotResponseJSONFactory jsonFactory;
+        this.userService = userService;
 
-    @Autowired
-    @Qualifier("commonElement")
-    private KakaoChatBotResponseJSONFactory commonElement;
+        this.apiService = apiService;
+
+        this.jsonFactory = jsonFactory;
+
+        this.commonElement = commonElement;
+
+    }
 
 
 //    private final WebClient webClient;
@@ -198,7 +206,7 @@ public class WebController{
     @RequestMapping(value = "/KakaoBot/school/detail",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> SchoolDetail(@RequestBody HashMap<String,Object> kakao){
 
-        log.info("===========================================detail===================================================");
+//        log.info("===========================================detail===================================================");
 
         JSONObject json = new JSONObject(kakao);
 
