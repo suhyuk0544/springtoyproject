@@ -22,7 +22,6 @@ POST https://api.openai.com/v1/completions
 Authorization: Bearer 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
 Content-Type: application/json
 
-
 {
   "max_tokens":120,
   "temperature":0.2,
