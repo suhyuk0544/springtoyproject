@@ -18,6 +18,11 @@ target/
 *.iws
 *.iml
 *.ipr
+!/src/main/resources/ssl.jks
+!/src/main/java/com/example/springtoyproject/config/ApiKey.java
+!/src/main/resources/application.yml
+!/src/main/resources/request.http
+
 
 ### NetBeans ###
 /nbproject/private/
@@ -31,7 +36,3 @@ build/
 
 ### VS Code ###
 .vscode/
-!/src/main/java/com/example/springtoyproject/config/ApiKey.java
-!/src/main/resources/ssl.jks
-!/src/main/resources/application.yml
-!/src/main/resources/request.http
