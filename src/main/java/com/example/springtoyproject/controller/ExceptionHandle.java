@@ -1,13 +1,10 @@
 package com.example.springtoyproject.controller;
 
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.suhyuk.Interface.KakaoChatBotResponseJSONFactory;
@@ -20,13 +17,18 @@ import org.suhyuk.Response.SimpleText;
 @RestControllerAdvice
 public class ExceptionHandle {
 
-    @Autowired
-    @Qualifier("jsonFactory")
-    private KakaoChatBotResponseJSONFactory jsonFactory;
+    private final KakaoChatBotResponseJSONFactory jsonFactory;
+
+    private final KakaoChatBotResponseJSONFactory commonElement;
 
     @Autowired
-    @Qualifier("commonElement")
-    private KakaoChatBotResponseJSONFactory commonElement;
+    public ExceptionHandle(@Qualifier("jsonFactory")KakaoChatBotResponseJSONFactory jsonFactory,@Qualifier("commonElement")KakaoChatBotResponseJSONFactory commonElement){
+
+        this.jsonFactory = jsonFactory;
+
+        this.commonElement = commonElement;
+
+    }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> customRuntimeException(){

@@ -254,13 +254,13 @@ class ApiService {
 
         JSONObject data = new JSONObject();
         data.put("type","sms");
-        data.put("from","01093500544");
+        data.put("from","");
         data.put("content",content);
 
         JSONObject object = new JSONObject();
 
         JSONArray json = new JSONArray();
-        object.put("to","01093500544");
+        object.put("to","");
         json.put(0,object);
         data.put("messages",json);
         object = null; //다 쓴 참조 해제
