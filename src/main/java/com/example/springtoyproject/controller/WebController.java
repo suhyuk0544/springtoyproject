@@ -48,9 +48,8 @@ public class WebController{
 
     private final KakaoChatBotResponseJSONFactory commonElement;
 
-
     @Autowired
-    public WebController(UserService userService,ApiService apiService,@Qualifier("jsonFactory") KakaoChatBotResponseJSONFactory jsonFactory,@Qualifier("commonElement") KakaoChatBotResponseJSONFactory commonElement){
+    public WebController(UserService userService,ApiService apiService,@Qualifier("mainJson") KakaoChatBotResponseJSONFactory jsonFactory,@Qualifier("ElementJson") KakaoChatBotResponseJSONFactory commonElement){
 
         this.userService = userService;
 
@@ -61,8 +60,6 @@ public class WebController{
         this.commonElement = commonElement;
 
     }
-
-
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
@@ -83,7 +80,11 @@ public class WebController{
 //                                                .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
             if (uriBuilder.isEmpty())
                 return new ResponseEntity<>(Mono.just("유저 정보는 있으나 다른 데이터가 문제 있습니다")
-                                                .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
+                                                .map(text -> ((SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText))
+                                                        .setText(text)
+                                                        .createMainJsonObject()
+                                                        .toString()),HttpStatus.OK);
+
             uri = uriBuilder.get().build();
 
         } catch (URISyntaxException e) {
@@ -96,9 +97,13 @@ public class WebController{
 
         return new ResponseEntity<>(apiService.neisApi(uri.toString())
                 .map(diet -> {
-                    JSONObject response = apiService.kakaoResponse(kakaoResponseType.simpleText,diet,null);
-
-                    return response.toString();
+                    return ((SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText))
+                            .setText(diet)
+                            .createMainJsonObject()
+                            .toString();
+//                    JSONObject response = apiService.kakaoResponse(kakaoResponseType.simpleText,diet,null);
+//
+//                    return response.toString();
                 })
                 ,HttpStatus.OK);
     }
@@ -114,7 +119,7 @@ public class WebController{
         SimpleText simpleText = (SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText);
 
         return userService.getUserInfo(userService.getUserInfoId(kakaoJson).get())
-                    .map(info -> new ResponseEntity<>(simpleText.setText("당신은" + info.getSchool().getSCHUL_NM() + "로 \n설정 되어 있습니다.").createMainJsonObject().toString(), HttpStatus.OK))
+                    .map(info -> new ResponseEntity<>(simpleText.setText("당신은 " + info.getSchool().getSCHUL_NM() + " 로 \n설정 되어 있습니다.").createMainJsonObject().toString(), HttpStatus.OK))
                     .orElseGet(() -> new ResponseEntity<>(simpleText.setText("유저 정보가 없습니다").createMainJsonObject().toString(), HttpStatus.OK));
     }
 
@@ -225,8 +230,6 @@ public class WebController{
     public Mono<JSONObject> GeoLocation(HttpServletRequest request){
 
         String ip = request.getRemoteAddr();
-
-        String AccessKey = "XqF575b0EH4sCOgkPxJh";
 
         log.info(request.getRemoteAddr());
 

@@ -22,7 +22,7 @@ public class ExceptionHandle {
     private final KakaoChatBotResponseJSONFactory commonElement;
 
     @Autowired
-    public ExceptionHandle(@Qualifier("jsonFactory")KakaoChatBotResponseJSONFactory jsonFactory,@Qualifier("commonElement")KakaoChatBotResponseJSONFactory commonElement){
+    public ExceptionHandle(@Qualifier("mainJson")KakaoChatBotResponseJSONFactory jsonFactory,@Qualifier("ElementJson")KakaoChatBotResponseJSONFactory commonElement){
 
         this.jsonFactory = jsonFactory;
 

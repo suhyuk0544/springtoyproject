@@ -1,6 +1,7 @@
 package com.example.springtoyproject.config;
 
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -18,15 +19,15 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins("*");
     }
     @Bean
+    @Qualifier("mainJson")
     public JsonFactory jsonFactory(){
         return new JsonFactory();
     }
 
     @Bean
+    @Qualifier("ElementJson")
     public CommonElement commonElement(){
-
         return new CommonElement();
-
     }
 
 

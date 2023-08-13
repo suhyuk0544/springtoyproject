@@ -21,6 +21,18 @@
         <webapp.lib>C:\Users\장유혁\IdeaProjects\KakaoBusinessChatBotResponse\target\KakaoChatBotResponse-1.0-SNAPSHOT.jar</webapp.lib>
 
     </properties>
+
+    <repositories>
+
+        <repository>
+            <id>local-repository</id>
+            <name>localRepository</name>
+            <url>file://${project.basedir}/libs</url>
+        </repository>
+
+    </repositories>
+
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -113,14 +125,19 @@
             <artifactId>httpclient</artifactId>
         </dependency>
 
+<!--        <dependency>-->
+<!--            <groupId>org.suhyuk</groupId>-->
+<!--            <artifactId>KakaoChatBotResponse-1.0-SNAPSHOT</artifactId>-->
+<!--            <version>whatever</version>-->
+<!--            <scope></scope>-->
+<!--            <systemPath>libs/KakaoChatBotResponse-1.0.jar</systemPath>-->
+<!--        </dependency>-->
+<!---->
         <dependency>
-            <groupId>org.suhyuk</groupId>
-            <artifactId>KakaoChatBotResponse-1.0-SNAPSHOT</artifactId>
-            <version>whatever</version>
-            <scope>system</scope>
-            <systemPath>${webapp.lib}</systemPath>
+            <groupId>com.suhyuk</groupId>
+            <artifactId>KakaoChatBotResponse</artifactId>
+            <version>1.0</version>
         </dependency>
-
     </dependencies>
 
     <build>

@@ -32,7 +32,7 @@ Content-Type: application/json
 
 ###
 
-POST https://localhost:8080/KakaoBot/school/detail
+POST https://www.suhyuk0544.xyz/KakaoBot/school/detail
 Content-Type: application/json
 
 {

@@ -24,7 +24,7 @@ class SpringtoyprojectApplicationTests {
 
         JsonFactory jsonFactory = applicationContext.getBean("jsonFactory", JsonFactory.class);
 
-        assert(jsonFactory instanceof JsonFactory); //빈으로 주입되어 초기화 후 생성된 인스턴스는 같다
+//        assert(jsonFactory == JsonFactory); //빈으로 주입되어 초기화 후 생성된 인스턴스는 같다
 
     }
 
