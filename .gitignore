@@ -1,8 +1,14 @@
 HELP.md
+src/main/java/com/example/springtoyproject/config/ApiKey.java
+src/main/resources/ssl.jks
+src/main/resources/application.yml
+src/main/resources/request.http
+
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
 
 ### STS ###
 .apt_generated
@@ -14,10 +20,7 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-!/src/main/java/com/example/springtoyproject/config/ApiKey.java
-!/src/main/resources/ssl.jks
-!/src/main/resources/application.yml
-!/src/main/resources/request.http
+
 
 .idea
 *.iws
