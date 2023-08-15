@@ -96,9 +96,11 @@ public class WebController{
 
 
         return new ResponseEntity<>(apiService.neisApi(uri.toString())
-                .map(diet -> {
+                .map(dietJson -> {
+                     apiService.FormatDietJson(dietJson);
+//
                     return ((SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText))
-                            .setText(diet)
+                            .setText(dietJson)
                             .createMainJsonObject()
                             .toString();
 //                    JSONObject response = apiService.kakaoResponse(kakaoResponseType.simpleText,diet,null);

@@ -15,6 +15,8 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.json.JSONObject;
 import org.json.JSONArray;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,6 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.suhyuk.Interface.KakaoChatBotResponseJSONFactory;
+import org.suhyuk.Interface.KakaoChatBotResponseType;
+import org.suhyuk.Response.BasicCard;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
@@ -38,7 +43,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 class ApiService {
 
@@ -50,6 +54,23 @@ class ApiService {
     private final SchoolJpa schoolJpa;
 
     private final UserService userService;
+
+    private final KakaoChatBotResponseJSONFactory jsonFactory;
+
+    @Autowired
+    ApiService(UserInfoJpa userInfoJpa, EntityManager entityManager, SchoolJpa schoolJpa, UserService userService, @Qualifier("mainJson") KakaoChatBotResponseJSONFactory jsonFactory){
+
+        this.userInfoJpa = userInfoJpa;
+
+        this.entityManager = entityManager;
+
+        this.schoolJpa = schoolJpa;
+
+        this.userService = userService;
+
+        this.jsonFactory = jsonFactory;
+
+    }
 
 
     public Optional<URIBuilder> kakao(JSONObject KakaoObject,String id) {
@@ -104,8 +125,8 @@ class ApiService {
                                 .flatMap(it -> Mono.error(new RuntimeException()))
                 )
                 .bodyToMono(String.class)
-                .onErrorResume(throwable -> Mono.error(new RuntimeException(throwable)))
-                .map(this::FormatDietJson);
+                .onErrorResume(throwable -> Mono.error(new RuntimeException(throwable)));
+
     }
 
     public URIBuilder kakao(LocalDate now) {
@@ -180,14 +201,15 @@ class ApiService {
     }
 
 
-    public String FormatDietJson(String diet){
+    public JSONArray FormatDietJson(String diet){
+
+        JSONArray carousel = new JSONArray();
 
         StringBuilder sb = new StringBuilder();
 
         JSONObject jsonObject = new JSONObject(diet);
 
         log.info(jsonObject.toString());
-
 
         if (jsonObject.has("mealServiceDietInfo")) {
 
@@ -199,14 +221,22 @@ class ApiService {
 
                 jsonObject = jsonArray.getJSONObject(i);
 
+                JSONObject basicCard = ((BasicCard) jsonFactory.createJSON(KakaoChatBotResponseType.BasicCard))
+                        .setTitle("")
+                        .setDescription("")
+                        .build();
+
+                carousel.put(basicCard);
+
                 sb.append(MakeFormat((jsonObject.getString("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()));
             }
 
         }else {
-            sb.append(MakeFormat(null,null));
+            ((BasicCard) jsonFactory.createJSON(KakaoChatBotResponseType.BasicCard))
+                    .setDescription(MakeFormat(null,null));
         }
 
-        return sb.toString();
+        return carousel;
     }
 
 
@@ -320,7 +350,7 @@ class ApiService {
 
 
 
-    public StringBuilder MakeFormat(@Nullable String content,@Nullable String date){
+    public String MakeFormat(@Nullable String content,@Nullable String date){
 
         StringBuilder sb = new StringBuilder();
 
@@ -328,7 +358,7 @@ class ApiService {
             sb.append(date).append("\n");
 
         if (content == null)
-            return sb.append("급식이 없습니다");
+            return sb.append("급식이 없습니다").toString();
 
         boolean r = true;
         String w = "";
@@ -346,7 +376,7 @@ class ApiService {
             w = q;
         }
         sb.append("\n");
-        return sb;
+        return sb.toString();
     }
 
     public String makeSignature(String timeStamp, String method, String url){
