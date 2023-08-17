@@ -81,7 +81,7 @@ class ApiService {
 
         URIBuilder uriBuilder = new URIBuilder();
         uriBuilder.setPath("/hub/mealServiceDietInfo")
-                .addParameter("KEY", ApiKey.neiskey.getKey())
+                .addParameter("KEY", ApiKey.neisKey.getKey())
                 .addParameter("Type", "json")
                 .addParameter("pIndex", "1")
                 .addParameter("ATPT_OFCDC_SC_CODE", school.getATPT_OFCDC_SC_CODE())
@@ -134,7 +134,7 @@ class ApiService {
 
         return new URIBuilder()
                 .setPath("/hub/mealServiceDietInfo")
-                .addParameter("KEY", ApiKey.neiskey.getKey())
+                .addParameter("KEY", ApiKey.neisKey.getKey())
                 .addParameter("Type","json")
                 .addParameter("pIndex","1")
                 .addParameter("ATPT_OFCDC_SC_CODE","J10")
@@ -222,18 +222,16 @@ class ApiService {
                 jsonObject = jsonArray.getJSONObject(i);
 
                 JSONObject basicCard = ((BasicCard) jsonFactory.createJSON(KakaoChatBotResponseType.BasicCard))
-                        .setTitle("")
-                        .setDescription("")
+                        .setTitle(LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString())
+                        .setDescription(MakeFormat((jsonObject.getString("DDISH_NM")).replace("<br/>","")))
                         .build();
 
                 carousel.put(basicCard);
-
-                sb.append(MakeFormat((jsonObject.getString("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()));
             }
 
         }else {
             ((BasicCard) jsonFactory.createJSON(KakaoChatBotResponseType.BasicCard))
-                    .setDescription(MakeFormat(null,null));
+                    .setDescription(MakeFormat(null));
         }
 
         return carousel;
@@ -278,8 +276,8 @@ class ApiService {
                 .baseUrl("https://sens.apigw.ntruss.com")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
-                .defaultHeader("x-ncp-iam-access-key", ApiKey.NcpAccessKey.getKey())
-                .defaultHeader("x-ncp-apigw-signature-v2",makeSignature(Long.toString(System.currentTimeMillis()),"POST","/sms/v2/services/"+ApiKey.serviceId.getKey()+"/messages"))
+//                .defaultHeader("x-ncp-iam-access-key", ApiKey.NcpAccessKey.getKey())
+//                .defaultHeader("x-ncp-apigw-signature-v2",makeSignature(Long.toString(System.currentTimeMillis()),"POST","/sms/v2/services/"+ApiKey.serviceId.getKey()+"/messages"))
                 .build();
 
         JSONObject data = new JSONObject();
@@ -299,7 +297,7 @@ class ApiService {
         log.info(data.toString());
 
         webClient.post()
-                .uri("/sms/v2/services/"+ApiKey.serviceId.getKey()+"/messages")
+//                .uri("/sms/v2/services/"+ApiKey.serviceId.getKey()+"/messages")
                 .bodyValue(data.toString())
                 .retrieve()
                 .bodyToMono(String.class)
@@ -350,12 +348,12 @@ class ApiService {
 
 
 
-    public String MakeFormat(@Nullable String content,@Nullable String date){
+    public String MakeFormat(String content){
 
         StringBuilder sb = new StringBuilder();
 
-        if (date != null)
-            sb.append(date).append("\n");
+//        if (date != null)
+//            sb.append(date).append("\n");
 
         if (content == null)
             return sb.append("급식이 없습니다").toString();
@@ -383,30 +381,31 @@ class ApiService {
 
         String encodeBase64String = null;
 
-        try {
-            String message = new StringBuilder()
-                    .append(method)
-                    .append(" ")
-                    .append(url)
-                    .append("\n")
-                    .append(timeStamp)
-                    .append("\n")
-                    .append(ApiKey.NcpAccessKey.getKey())
-                    .toString();
-
-
-            SecretKeySpec signingKey = new SecretKeySpec(ApiKey.NcpSecretKey.getKey().getBytes(StandardCharsets.UTF_8),"HmacSHA256");
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(signingKey);
-            byte[] rawHmac = mac.doFinal(message.getBytes(StandardCharsets.UTF_8));
-
-            encodeBase64String = Base64.encodeBase64String(rawHmac);
-
-
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            e.printStackTrace();
-        }
-        return encodeBase64String;
+//        try {
+//            String message = new StringBuilder()
+//                    .append(method)
+//                    .append(" ")
+//                    .append(url)
+//                    .append("\n")
+//                    .append(timeStamp)
+//                    .append("\n")
+//                    .append(ApiKey.NcpAccessKey.getKey())
+//                    .toString();
+//
+//
+//            SecretKeySpec signingKey = new SecretKeySpec(ApiKey.NcpSecretKey.getKey().getBytes(StandardCharsets.UTF_8),"HmacSHA256");
+//            Mac mac = Mac.getInstance("HmacSHA256");
+//            mac.init(signingKey);
+//            byte[] rawHmac = mac.doFinal(message.getBytes(StandardCharsets.UTF_8));
+//
+//            encodeBase64String = Base64.encodeBase64String(rawHmac);
+//
+//
+//        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+//            e.printStackTrace();
+//        }
+//        return encodeBase64String;
+        return null;
     }
 
 }

@@ -6,6 +6,7 @@ import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
 import com.example.springtoyproject.config.WebConfig;
 import com.example.springtoyproject.config.kakaoResponseType;
+import jdk.security.jarsigner.JarSigner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
@@ -17,6 +18,8 @@ import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import org.suhyuk.Abstract.JsonFactory;
 import org.suhyuk.Interface.KakaoChatBotResponseJSONFactory;
 import org.suhyuk.Interface.KakaoChatBotResponseType;
 import org.suhyuk.Response.BasicCard;
@@ -97,7 +100,14 @@ public class WebController{
 
         return new ResponseEntity<>(apiService.neisApi(uri.toString())
                 .map(dietJson -> {
-                     apiService.FormatDietJson(dietJson);
+
+
+//                    JsonFactory.createCarousel(apiService.FormatDietJson(dietJson));
+
+
+//                 .FormatDietJson(dietJson);
+
+
 //
                     return ((SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText))
                             .setText(dietJson)
@@ -146,7 +156,7 @@ public class WebController{
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://api.openai.com")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE,MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer " + ApiKey.OPENAIAPIKEY.getKey())
+//                .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer " + ApiKey.OPENAIAPIKEY.getKey())
                 .build();
 
 
@@ -192,7 +202,7 @@ public class WebController{
                     .uri(uriBuilder -> uriBuilder
                         .path("/hub/schoolInfo")
                         .queryParam("SCHUL_NM", jsonObject.get("sys_constant"))
-                        .queryParam("KEY", ApiKey.neiskey.getKey())
+                        .queryParam("KEY", ApiKey.neisKey.getKey())
                         .queryParam("Type","json")
                         .queryParam("pIndex","1")
                         .build()
@@ -238,7 +248,7 @@ public class WebController{
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://geolocation.apigw.ntruss.com")
                 .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
-                .defaultHeader("x-ncp-iam-access-key",ApiKey.NcpAccessKey.getKey())
+//                .defaultHeader("x-ncp-iam-access-key",ApiKey.NcpAccessKey.getKey())
                 .defaultHeader("x-ncp-apigw-signature-v2",apiService.makeSignature(Long.toString(System.currentTimeMillis()),"GET","/geolocation/v2/geoLocation?ip="+ip+"&ext=t&responseFormatType=json"))
                 .build();
 
