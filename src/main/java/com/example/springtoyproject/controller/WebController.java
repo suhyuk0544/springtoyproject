@@ -24,6 +24,7 @@ import org.suhyuk.Interface.KakaoChatBotResponseJSONFactory;
 import org.suhyuk.Interface.KakaoChatBotResponseType;
 import org.suhyuk.Response.BasicCard;
 import org.suhyuk.Response.SimpleText;
+import org.suhyuk.Response.SkillVersion;
 import reactor.core.publisher.Mono;
 
 
@@ -99,24 +100,7 @@ public class WebController{
 
 
         return new ResponseEntity<>(apiService.neisApi(uri.toString())
-                .map(dietJson -> {
-
-
-//                    JsonFactory.createCarousel(apiService.FormatDietJson(dietJson));
-
-
-//                 .FormatDietJson(dietJson);
-
-
-//
-                    return ((SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText))
-                            .setText(dietJson)
-                            .createMainJsonObject()
-                            .toString();
-//                    JSONObject response = apiService.kakaoResponse(kakaoResponseType.simpleText,diet,null);
-//
-//                    return response.toString();
-                })
+                .map(dietJson -> JsonFactory.mainJsonObject(SkillVersion.VERSION2.getVersion(),new JSONArray().put(JsonFactory.createCarousel(KakaoChatBotResponseType.SimpleText,apiService.FormatDietJson(dietJson)))).toString())
                 ,HttpStatus.OK);
     }
 
