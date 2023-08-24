@@ -164,7 +164,7 @@
                         -XX:-UseConcMarkSweepGC
 
                         -XX:-PrintGC
-                        -XX:-PrintGCDetails
+                        -XX:-printGCDetails
                         -XX:-PrintGCTimeStamps
                         -XX:-TraceClassUnloading
                         -XX:-TraceClassLoading
