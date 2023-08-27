@@ -1,7 +1,6 @@
 HELP.md
 src/main/java/com/example/springtoyproject/config/ApiKey.java
 src/main/resources/ssl.jks
-src/main/resources/application.yml
 src/main/resources/request.http
 
 target/
