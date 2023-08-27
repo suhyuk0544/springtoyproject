@@ -100,7 +100,8 @@ public class WebController{
 
 
         return new ResponseEntity<>(apiService.neisApi(uri.toString())
-                .map(dietJson -> JsonFactory.mainJsonObject(SkillVersion.VERSION2.getVersion(),new JSONArray().put(JsonFactory.createCarousel(KakaoChatBotResponseType.BasicCard,apiService.FormatDietJson(dietJson)))).toString())
+                .map(dietJson -> JsonFactory.mainJsonObject(SkillVersion.VERSION2.getVersion()
+                        ,JsonFactory.createCarousel(KakaoChatBotResponseType.TextCard,apiService.FormatDietJson(dietJson))).toString())
                 ,HttpStatus.OK);
     }
 

@@ -27,6 +27,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.suhyuk.Interface.KakaoChatBotResponseJSONFactory;
 import org.suhyuk.Interface.KakaoChatBotResponseType;
 import org.suhyuk.Response.BasicCard;
+import org.suhyuk.Response.TextCard;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
@@ -126,7 +127,6 @@ class ApiService {
                 )
                 .bodyToMono(String.class)
                 .onErrorResume(throwable -> Mono.error(new RuntimeException(throwable)));
-
     }
 
     public URIBuilder kakao(LocalDate now) {
@@ -221,10 +221,10 @@ class ApiService {
 
                 jsonObject = jsonArray.getJSONObject(i);
 
-                JSONObject basicCard = ((BasicCard) jsonFactory.createJSON(KakaoChatBotResponseType.BasicCard))
-                        .setTitle(LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString())
-                        .setDescription(MakeFormat((jsonObject.getString("DDISH_NM")).replace("<br/>","")))
-                        .build();
+
+                JSONObject basicCard = ((TextCard) jsonFactory.createJSON(KakaoChatBotResponseType.TextCard))
+                        .setText(MakeFormat((jsonObject.getString("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()))
+                                .build();
 
                 carousel.put(basicCard);
             }
@@ -346,6 +346,30 @@ class ApiService {
         return jsonObject;
     }
 
+    public String MakeFormat(@Nullable String content, @Nullable String date) {
+        StringBuilder sb = new StringBuilder();
+        if (date != null)
+            sb.append(date).append("\n");
+        if (content == null)
+            return sb.append("급식이 없습니다").toString();
+        boolean r = true;
+        String w = "";
+        for (int i = 0; i < content.length(); i++) {
+            String q = String.valueOf(content.charAt(i));
+            if (!q.equals(" ")) {
+                if (!q.equals("(") && r) {
+                    sb.append(q);
+                } else {
+                    r = q.equals(")");
+                }
+            } else if (!w.equals(" ")) {
+                sb.append("\n");
+            }
+            w = q;
+        }
+        sb.append("\n");
+        return sb.toString();
+    }
 
 
     public String MakeFormat(String content){
