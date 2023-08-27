@@ -38,6 +38,7 @@ import javax.persistence.PersistenceContext;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
@@ -92,7 +93,9 @@ class ApiService {
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        switch (FormatKakaoBodyDetail(KakaoObject).getString("origin").replace(" ","")) {
+        String date =FormatKakaoBodyDetail(KakaoObject).getString("origin").replace(" ","");
+
+        switch (date) {
             case "오늘" -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now,dateTimeFormatter));
 
             case "내일" -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now.plusDays(1), dateTimeFormatter));
@@ -106,7 +109,13 @@ class ApiService {
             case "다다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD", TimeFormat(now.plusWeeks(2),dateTimeFormatter))
                         .addParameter("MLSV_TO_YMD", TimeFormat(now.plusWeeks(3),dateTimeFormatter));
 
-            default -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            default -> {
+                if (checkDate(date)) {
+                    uriBuilder.addParameter("MLSV_YMD", date);
+                } else {
+                    uriBuilder.addParameter("MLSV_YMD", TimeFormat(now, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                }
+            }
         }
         return Optional.of(uriBuilder);
     }
@@ -140,6 +149,17 @@ class ApiService {
                 .addParameter("ATPT_OFCDC_SC_CODE","J10")
                 .addParameter("SD_SCHUL_CODE","7530581")
                 .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+    }
+
+    public boolean checkDate(String checkDate) {
+        try {
+            SimpleDateFormat dateFormatParser = new SimpleDateFormat("yyyy-MM-dd");
+            dateFormatParser.setLenient(false);
+            dateFormatParser.parse(checkDate);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Transactional
@@ -224,7 +244,8 @@ class ApiService {
 
                 JSONObject basicCard = ((TextCard) jsonFactory.createJSON(KakaoChatBotResponseType.TextCard))
                         .setText(MakeFormat((jsonObject.getString("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()))
-                                .build();
+                        .setButton("공유","share",null)
+                        .build();
 
                 carousel.put(basicCard);
             }
