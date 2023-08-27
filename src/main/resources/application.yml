@@ -1,0 +1,85 @@
+
+spring:
+
+  datasource:
+#    url: jdbc:h2:mem:testdb
+    url: jdbc:mysql://localhost:3306/SpringDB?useSSL=false&useUnicode=true&serverTimezone=Asia/Seoul
+    username: suhyuk0544
+    password: suhyuk1027
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    generate-unique-name: false
+
+#  mustache:
+#    expose-session-attributes: true
+
+#  h2:
+#    console:
+#      enabled: true
+#      settings:
+#        web-allow-others: true
+#      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    show-sql: true
+  logging:
+    level:
+      org.hibernate.SQL: debug
+
+#  sql:
+#    init:
+#      platform: h2
+
+
+
+server:
+
+  port: 8080
+
+
+  ssl:
+    enabled: true
+    key-password: suhyuk1027
+    key-store-password: suhyuk1027
+#    key-store: /spring/SSL/ssl.jks
+    key-store: src/main/resources/ssl.jks
+
+    key-store-type: "JKS"
+    enabled-protocols:
+    - TLSv1.1
+    - TLSv1.2
+    - TLSv1.3
+#    key-store: src/main/resources/ssl.jks
+
+
+
+  tomcat:
+
+    connection-timeout: 5s
+    accept-count: 10
+    max-keep-alive-requests: 1
+
+    threads:
+      max: 100
+
+
+  remote:
+
+
+      protocol-header:
+
+  servlet:
+
+    session:
+
+      timeout: 60m
+
+  #  main:
+  #    web-application-type: none
+
+
+

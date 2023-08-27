@@ -100,7 +100,7 @@ public class WebController{
 
 
         return new ResponseEntity<>(apiService.neisApi(uri.toString())
-                .map(dietJson -> JsonFactory.mainJsonObject(SkillVersion.VERSION2.getVersion(),new JSONArray().put(JsonFactory.createCarousel(KakaoChatBotResponseType.SimpleText,apiService.FormatDietJson(dietJson)))).toString())
+//                .map(dietJson -> JsonFactory.mainJsonObject(SkillVersion.VERSION2.getVersion(),new JSONArray().put(JsonFactory.(KakaoChatBotResponseType.SimpleText,apiService.FormatDietJson(dietJson)))).toString())
                 ,HttpStatus.OK);
     }
 
@@ -186,7 +186,7 @@ public class WebController{
                     .uri(uriBuilder -> uriBuilder
                         .path("/hub/schoolInfo")
                         .queryParam("SCHUL_NM", jsonObject.get("sys_constant"))
-                        .queryParam("KEY", ApiKey.neisKey.getKey())
+//                        .queryParam("KEY", ApiKey.neisKey.getKey())
                         .queryParam("Type","json")
                         .queryParam("pIndex","1")
                         .build()
