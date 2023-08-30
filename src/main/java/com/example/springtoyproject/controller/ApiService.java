@@ -241,13 +241,16 @@ class ApiService {
 
                 jsonObject = jsonArray.getJSONObject(i);
 
+//                if (Objects.equals(jsonObject.getString("MMEAL_SC_NM"), "중식")) {
 
-                JSONObject basicCard = ((TextCard) jsonFactory.createJSON(KakaoChatBotResponseType.TextCard))
-                        .setText(MakeFormat((jsonObject.getString("DDISH_NM")).replace("<br/>",""),LocalDate.parse((String)jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString()))
-                        .setButton("공유","share",null)
-                        .build();
+                    JSONObject basicCard = ((TextCard) jsonFactory.createJSON(KakaoChatBotResponseType.TextCard))
+                            .setText(MakeFormat(jsonObject))
+                            .setButton("공유", "share", null)
+                            .build();
 
-                carousel.put(basicCard);
+                    carousel.put(basicCard);
+
+//                }
             }
 
         }else {
@@ -367,10 +370,18 @@ class ApiService {
         return jsonObject;
     }
 
-    public String MakeFormat(@Nullable String content, @Nullable String date) {
+    public String MakeFormat(JSONObject jsonObject) {
         StringBuilder sb = new StringBuilder();
+
+        if (jsonObject == null)
+            throw new RuntimeException();
+
+        String date = LocalDate.parse((String) jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString();
+        String content = jsonObject.getString("DDISH_NM").replace("<br/>", "");
+        String mmeal_sc_nm = jsonObject.getString("MMEAL_SC_NM");
+
         if (date != null)
-            sb.append(date).append("\n");
+            sb.append(date).append(" ").append("[").append(mmeal_sc_nm).append("]").append("\n");
         if (content == null)
             return sb.append("급식이 없습니다").toString();
         boolean r = true;
@@ -393,34 +404,34 @@ class ApiService {
     }
 
 
-    public String MakeFormat(String content){
-
-        StringBuilder sb = new StringBuilder();
-
-//        if (date != null)
-//            sb.append(date).append("\n");
-
-        if (content == null)
-            return sb.append("급식이 없습니다").toString();
-
-        boolean r = true;
-        String w = "";
-
-        for (int i = 0; i < content.length(); i++) {
-            String q = String.valueOf(content.charAt(i));
-            if (!q.equals(" ")) {
-                //                    sb.append(" ");
-                if (!q.equals("(") && r) {
-                    sb.append(q);
-                } else r = q.equals(")");
-            }else if (!w.equals(" ")){
-                sb.append("\n");
-            }
-            w = q;
-        }
-        sb.append("\n");
-        return sb.toString();
-    }
+//    public String MakeFormat(String content){
+//
+//        StringBuilder sb = new StringBuilder();
+//
+////        if (date != null)
+////            sb.append(date).append("\n");
+//
+//        if (content == null)
+//            return sb.append("급식이 없습니다").toString();
+//
+//        boolean r = true;
+//        String w = "";
+//
+//        for (int i = 0; i < content.length(); i++) {
+//            String q = String.valueOf(content.charAt(i));
+//            if (!q.equals(" ")) {
+//                //                    sb.append(" ");
+//                if (!q.equals("(") && r) {
+//                    sb.append(q);
+//                } else r = q.equals(")");
+//            }else if (!w.equals(" ")){
+//                sb.append("\n");
+//            }
+//            w = q;
+//        }
+//        sb.append("\n");
+//        return sb.toString();
+//    }
 
     public String makeSignature(String timeStamp, String method, String url){
 
