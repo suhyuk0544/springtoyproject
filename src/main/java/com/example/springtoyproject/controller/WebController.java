@@ -4,6 +4,7 @@ import com.example.springtoyproject.School.SchoolJpa;
 import com.example.springtoyproject.UserInfo.UserInfoJpa;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
+import com.example.springtoyproject.config.JsonPropertyEditor;
 import com.example.springtoyproject.config.WebConfig;
 import com.example.springtoyproject.config.kakaoResponseType;
 import jdk.security.jarsigner.JarSigner;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -52,6 +54,12 @@ public class WebController{
 
     private final KakaoChatBotResponseJSONFactory commonElement;
 
+    @InitBinder
+    public void initBinder(WebDataBinder dataBinder){
+
+        dataBinder.registerCustomEditor(JSONObject.class,new JsonPropertyEditor());
+
+    }
     @Autowired
     public WebController(UserService userService,ApiService apiService,@Qualifier("mainJson") KakaoChatBotResponseJSONFactory jsonFactory,@Qualifier("ElementJson") KakaoChatBotResponseJSONFactory commonElement){
 
@@ -66,9 +74,9 @@ public class WebController{
     }
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody Map<String,Object> kakao){
+    public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody JSONObject kakaoJson){
 
-        JSONObject kakaoJson = new JSONObject(kakao);
+//        JSONObject kakaoJson = new JSONObject(kakao);
 
         log.info(kakaoJson.toString());
 
