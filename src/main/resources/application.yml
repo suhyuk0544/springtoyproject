@@ -45,9 +45,8 @@ server:
     enabled: true
     key-password: suhyuk1027
     key-store-password: suhyuk1027
-    key-store: /spring/SSL/ssl.jks
-#    key-store: src/main/resources/ssl.jks
-
+#    key-store: /spring/SSL/ssl.jks
+    key-store: src/main/resources/ssl.jks
     key-store-type: "JKS"
     enabled-protocols:
     - TLSv1.1

@@ -41,6 +41,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -174,10 +175,6 @@ class ApiService {
         if (schoolJpa.findBySD_SCHUL_CODE(jsonObject.getString("SD_SCHUL_CODE")).isEmpty())
             schoolJpa.save(school);
 
-//        log.info(entityManager.getReference(UserInfo.class,id).getUserid());
-//        if (userInfoJpa.findUserInfoByUserid(id) == null)
-//            log.info("null");
-
         userInfoJpa.findById(id).ifPresentOrElse(user ->  //Optional 접근으로 인해 쿼리가 2개 나감
                         user.update(entityManager.find(School.class,jsonObject.getString("SD_SCHUL_CODE"))) //트랜잭션 변경감지 사용해서 수정
                         ,() -> userInfoJpa.save(UserInfo.builder() //null 경우
@@ -225,8 +222,6 @@ class ApiService {
 
         JSONArray carousel = new JSONArray();
 
-        StringBuilder sb = new StringBuilder();
-
         JSONObject jsonObject = new JSONObject(diet);
 
         log.info(jsonObject.toString());
@@ -237,16 +232,23 @@ class ApiService {
 
             jsonArray = schoolInfo(jsonArray);
 
+//            Collections.sort(jsonArray,(j1,j2) -> {
+
+
+
+//            });
+
             for (int i = 0; i < jsonArray.length(); i++) {
+
 
                 jsonObject = jsonArray.getJSONObject(i);
 
 //                if (Objects.equals(jsonObject.getString("MMEAL_SC_NM"), "중식")) {
 
                     JSONObject basicCard = ((TextCard) jsonFactory.createJSON(KakaoChatBotResponseType.TextCard))
-                            .setText(MakeFormat(jsonObject))
-                            .setButton("공유", "share", null)
-                            .build();
+                                .setText(MakeFormat(jsonObject))
+                                .setButton("공유", "share", null)
+                                .build();
 
                     carousel.put(basicCard);
 
@@ -374,7 +376,7 @@ class ApiService {
         StringBuilder sb = new StringBuilder();
 
         if (jsonObject == null)
-            throw new RuntimeException();
+            return sb.append("급식이 없습니다").toString();
 
         String date = LocalDate.parse((String) jsonObject.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).toString();
         String content = jsonObject.getString("DDISH_NM").replace("<br/>", "");
@@ -384,6 +386,7 @@ class ApiService {
             sb.append(date).append(" ").append("[").append(mmeal_sc_nm).append("]").append("\n");
         if (content == null)
             return sb.append("급식이 없습니다").toString();
+
         boolean r = true;
         String w = "";
         for (int i = 0; i < content.length(); i++) {

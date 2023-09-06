@@ -76,8 +76,6 @@ public class WebController{
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody JSONObject kakaoJson){
 
-//        JSONObject kakaoJson = new JSONObject(kakao);
-
         log.info(kakaoJson.toString());
 
         URI uri;
@@ -114,9 +112,7 @@ public class WebController{
     }
 
     @RequestMapping(value = "/KakaoBot/info/me", method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> userInfo(@RequestBody Map<String,Object> kakao){
-
-        JSONObject kakaoJson = new JSONObject(kakao);
+    public ResponseEntity<String> userInfo(@RequestBody JSONObject kakaoJson){
 
         if (userService.getUserInfoId(kakaoJson).isEmpty())
             return ResponseEntity.badRequest().build();
@@ -140,9 +136,7 @@ public class WebController{
     }
 
     @RequestMapping(value = "/KakaoBot/ChatGpt",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<String> Kakao(@RequestBody Map<String,Object> kakaoMap){
-
-        JSONObject kakaoJson = new JSONObject(kakaoMap);
+    public Mono<String> Kakao(@RequestBody JSONObject kakaoJson){
 
         JSONObject request = apiService.FormatRequestKoGptJson((String) apiService.FormatKakaoBody(kakaoJson).get("sys_constant"));
 
@@ -180,9 +174,8 @@ public class WebController{
 
 
     @RequestMapping(value = "/KakaoBot/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Mono<String>> School(@RequestBody HashMap<String,Object> KakaoJson){
+    public ResponseEntity<Mono<String>> School(@RequestBody JSONObject kakaoJson){
 
-        JSONObject kakaoJson = new JSONObject(KakaoJson);
 
         JSONObject jsonObject = apiService.FormatKakaoBody(kakaoJson);
 
