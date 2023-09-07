@@ -1,20 +1,14 @@
 package com.example.springtoyproject.controller;
 
-import com.example.springtoyproject.School.SchoolJpa;
-import com.example.springtoyproject.UserInfo.UserInfoJpa;
 import com.example.springtoyproject.UserInfo.UserService;
-import com.example.springtoyproject.config.ApiKey;
-import com.example.springtoyproject.config.JsonPropertyEditor;
-import com.example.springtoyproject.config.WebConfig;
-import com.example.springtoyproject.config.kakaoResponseType;
-import jdk.security.jarsigner.JarSigner;
-import lombok.RequiredArgsConstructor;
+import com.example.springtoyproject.config.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.WebDataBinder;
@@ -24,7 +18,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.suhyuk.Abstract.JsonFactory;
 import org.suhyuk.Interface.KakaoChatBotResponseJSONFactory;
 import org.suhyuk.Interface.KakaoChatBotResponseType;
-import org.suhyuk.Response.BasicCard;
 import org.suhyuk.Response.SimpleText;
 import org.suhyuk.Response.SkillVersion;
 import reactor.core.publisher.Mono;
@@ -54,14 +47,17 @@ public class WebController{
 
     private final KakaoChatBotResponseJSONFactory commonElement;
 
+//    private final ConversionService conversionService;
+
     @InitBinder
     public void initBinder(WebDataBinder dataBinder){
 
-        dataBinder.registerCustomEditor(JSONObject.class,new JsonPropertyEditor());
-
+//        dataBinder.setConversionService(conversionService);
+//        dataBinder.registerCustomEditor(JSONObject.class,new JsonPropertyEditor());
     }
+
     @Autowired
-    public WebController(UserService userService,ApiService apiService,@Qualifier("mainJson") KakaoChatBotResponseJSONFactory jsonFactory,@Qualifier("ElementJson") KakaoChatBotResponseJSONFactory commonElement){
+    public WebController(UserService userService, ApiService apiService, @Qualifier("mainJson") KakaoChatBotResponseJSONFactory jsonFactory, @Qualifier("ElementJson") KakaoChatBotResponseJSONFactory commonElement){
 
         this.userService = userService;
 
@@ -70,12 +66,12 @@ public class WebController{
         this.jsonFactory = jsonFactory;
 
         this.commonElement = commonElement;
-
     }
 
     @RequestMapping(value = "/KakaoBot/diet",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody JSONObject kakaoJson){
+    public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody HashMap<String,Object> kakaoMap){
 
+        JSONObject kakaoJson = new JSONObject(kakaoMap);
         log.info(kakaoJson.toString());
 
         URI uri;
@@ -112,7 +108,9 @@ public class WebController{
     }
 
     @RequestMapping(value = "/KakaoBot/info/me", method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> userInfo(@RequestBody JSONObject kakaoJson){
+    public ResponseEntity<String> userInfo(@RequestBody HashMap<String,Object> kakaoMap){
+
+        JSONObject kakaoJson = new JSONObject(kakaoMap);
 
         if (userService.getUserInfoId(kakaoJson).isEmpty())
             return ResponseEntity.badRequest().build();
@@ -174,8 +172,9 @@ public class WebController{
 
 
     @RequestMapping(value = "/KakaoBot/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Mono<String>> School(@RequestBody JSONObject kakaoJson){
+    public ResponseEntity<Mono<String>> School(@RequestBody HashMap<String,Object> kakaoMap){
 
+        JSONObject kakaoJson = new JSONObject(kakaoMap);
 
         JSONObject jsonObject = apiService.FormatKakaoBody(kakaoJson);
 

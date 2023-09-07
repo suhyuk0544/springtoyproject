@@ -45,6 +45,8 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 
+import static java.lang.CharSequence.compare;
+
 @Service
 @Slf4j
 class ApiService {
@@ -232,11 +234,13 @@ class ApiService {
 
             jsonArray = schoolInfo(jsonArray);
 
-//            Collections.sort(jsonArray,(j1,j2) -> {
+            Collections.sort(jsonArray.toList(),(j1, j2) -> {
+                JSONObject jsonObject1 = (JSONObject) j1;
+                JSONObject jsonObject2 = (JSONObject) j2;
+                return LocalDate.parse((String) jsonObject1.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).compareTo(LocalDate.parse((String) jsonObject2.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")));
+            });
 
-
-
-//            });
+            log.info(jsonArray.toString());
 
             for (int i = 0; i < jsonArray.length(); i++) {
 
