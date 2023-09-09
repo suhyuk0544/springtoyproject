@@ -38,6 +38,7 @@ import javax.persistence.PersistenceContext;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -94,28 +95,32 @@ class ApiService {
 
         LocalDate now = LocalDate.now();
 
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+//        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         String date =FormatKakaoBodyDetail(KakaoObject).getString("origin").replace(" ","");
 
         switch (date) {
-            case "오늘" -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now,dateTimeFormatter));
+            case "오늘" -> uriBuilder.addParameter("MLSV_YMD", now.format(formatter));
 
-            case "내일" -> uriBuilder.addParameter("MLSV_YMD", TimeFormat(now.plusDays(1), dateTimeFormatter));
+            case "내일" -> uriBuilder.addParameter("MLSV_YMD",now.plusDays(1).format(formatter));
 
-            case "이번주" -> uriBuilder.addParameter("MLSV_FROM_YMD", TimeFormat(now,dateTimeFormatter))
-                        .addParameter("MLSV_TO_YMD", TimeFormat(now.plusWeeks(1), dateTimeFormatter));
+            case "이번주" -> uriBuilder.addParameter("MLSV_FROM_YMD",now.format(formatter))
+                        .addParameter("MLSV_TO_YMD", now.plusWeeks(1).format(formatter));
 
-            case "다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD", TimeFormat(now.plusWeeks(1), dateTimeFormatter))
-                        .addParameter("MLSV_TO_YMD", TimeFormat(now.plusWeeks(2), dateTimeFormatter));
+            case "다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD", now.plusWeeks(1).format(formatter))
+                        .addParameter("MLSV_TO_YMD", now.plusWeeks(2).format(formatter));
 
-            case "다다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD", TimeFormat(now.plusWeeks(2),dateTimeFormatter))
-                        .addParameter("MLSV_TO_YMD", TimeFormat(now.plusWeeks(3),dateTimeFormatter));
+            case "다다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD", now.plusWeeks(2).format(formatter))
+                        .addParameter("MLSV_TO_YMD",now.plusWeeks(3).format(formatter));
 
             default -> {
                 if (checkDate(date)) {
-                    uriBuilder.addParameter("MLSV_YMD", date);
+                    log.info(date);
+                    uriBuilder.addParameter("MLSV_YMD",LocalDate.parse(date).format(formatter));
                 } else {
+                    log.info("none");
                     uriBuilder.addParameter("MLSV_YMD", TimeFormat(now, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                 }
             }
@@ -161,7 +166,9 @@ class ApiService {
             dateFormatParser.parse(checkDate);
             return true;
         } catch (Exception e) {
-            return false;
+            log.info("error");
+//            return false;
+            return true;
         }
     }
 
@@ -278,10 +285,10 @@ class ApiService {
 
     public String TimeFormat(LocalDate localDate,DateTimeFormatter dateTimeFormatter){
 
-        LocalDate now = LocalDate.parse(localDate.toString(),dateTimeFormatter);
+        LocalDate date = LocalDate.parse(localDate.toString(),dateTimeFormatter);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-        return now.format(formatter);
+        return localDate.format(formatter);
     }
 
 
