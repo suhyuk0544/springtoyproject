@@ -8,11 +8,9 @@ import com.example.springtoyproject.UserInfo.UserInfoJpa;
 import com.example.springtoyproject.UserInfo.UserService;
 import com.example.springtoyproject.config.ApiKey;
 import com.example.springtoyproject.config.kakaoResponseType;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.tomcat.util.codec.binary.Base64;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,22 +29,15 @@ import org.suhyuk.Response.TextCard;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Optional;
-
-import static java.lang.CharSequence.compare;
+import java.util.*;
+import java.util.function.Function;
 
 @Service
 @Slf4j
@@ -79,9 +70,7 @@ class ApiService {
     }
 
 
-    public Optional<URIBuilder> kakao(JSONObject KakaoObject,String id) {
-
-//        UserInfo userInfo = userService.getUserInfo(id); //이 부분부터
+    public Optional<URIBuilder> kakaoUserSchoolInfoUriBuilder(String id) {
 
         School school = userService.getSchoolByUserInfo(id).orElseThrow();
 
@@ -93,39 +82,45 @@ class ApiService {
                 .addParameter("ATPT_OFCDC_SC_CODE", school.getATPT_OFCDC_SC_CODE())
                 .addParameter("SD_SCHUL_CODE", school.getSD_SCHUL_CODE());
 
+        return Optional.of(uriBuilder);
+    }
+
+    public HashMap<String,LocalDate> getDateAtJsonObject(String date){
         LocalDate now = LocalDate.now();
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-
-//        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        String date =FormatKakaoBodyDetail(KakaoObject).getString("origin").replace(" ","");
+        HashMap<String,LocalDate> localDates = new HashMap<>();
 
         switch (date) {
-            case "오늘" -> uriBuilder.addParameter("MLSV_YMD", now.format(formatter));
+            case "오늘" -> localDates.put("MLSV_YMD",now);
 
-            case "내일" -> uriBuilder.addParameter("MLSV_YMD",now.plusDays(1).format(formatter));
+            case "내일" -> localDates.put("MLSV_YMD",now.plusDays(1));
 
-            case "이번주" -> uriBuilder.addParameter("MLSV_FROM_YMD",now.format(formatter))
-                        .addParameter("MLSV_TO_YMD", now.plusWeeks(1).format(formatter));
 
-            case "다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD", now.plusWeeks(1).format(formatter))
-                        .addParameter("MLSV_TO_YMD", now.plusWeeks(2).format(formatter));
+            case "이번주" -> localDates = putLocalDate(now,now.plusWeeks(1));
 
-            case "다다음주" -> uriBuilder.addParameter("MLSV_FROM_YMD", now.plusWeeks(2).format(formatter))
-                        .addParameter("MLSV_TO_YMD",now.plusWeeks(3).format(formatter));
+
+            case "다음주" -> localDates = putLocalDate(now.plusWeeks(1),now.plusWeeks(2));
+
+
+            case "다다음주" -> localDates = putLocalDate(now.plusWeeks(2),now.plusWeeks(3));
 
             default -> {
                 if (checkDate(date)) {
-                    log.info(date);
-                    uriBuilder.addParameter("MLSV_YMD",LocalDate.parse(date).format(formatter));
+                    localDates.put("MLSV_YMD",LocalDate.parse(date));
                 } else {
-                    log.info("none");
-                    uriBuilder.addParameter("MLSV_YMD", TimeFormat(now, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                    localDates.put("MLSV_YMD",now);
                 }
             }
         }
-        return Optional.of(uriBuilder);
+        return localDates;
+    }
+
+    public HashMap<String,LocalDate> putLocalDate(LocalDate from,LocalDate to){
+
+        HashMap<String,LocalDate> localDates = new HashMap<>();
+        localDates.put("MLSV_FROM_YMD",from);
+        localDates.put("MLSV_TO_YMD",to);
+
+        return localDates;
     }
 
     public Mono<String> neisApi(String uri){
@@ -156,7 +151,7 @@ class ApiService {
                 .addParameter("pIndex","1")
                 .addParameter("ATPT_OFCDC_SC_CODE","J10")
                 .addParameter("SD_SCHUL_CODE","7530581")
-                .addParameter("MLSV_YMD",TimeFormat(now,DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                .addParameter("MLSV_YMD",now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
     }
 
     public boolean checkDate(String checkDate) {
@@ -166,9 +161,7 @@ class ApiService {
             dateFormatParser.parse(checkDate);
             return true;
         } catch (Exception e) {
-            log.info("error");
-//            return false;
-            return true;
+            return false;
         }
     }
 
@@ -184,8 +177,7 @@ class ApiService {
         if (schoolJpa.findBySD_SCHUL_CODE(jsonObject.getString("SD_SCHUL_CODE")).isEmpty())
             schoolJpa.save(school);
 
-        userInfoJpa.findById(id).ifPresentOrElse(user ->  //Optional 접근으로 인해 쿼리가 2개 나감
-                        user.update(entityManager.find(School.class,jsonObject.getString("SD_SCHUL_CODE"))) //트랜잭션 변경감지 사용해서 수정
+        userInfoJpa.findById(id).ifPresentOrElse(user -> user.update(entityManager.find(School.class,jsonObject.getString("SD_SCHUL_CODE"))) //트랜잭션 변경감지 사용해서 수정
                         ,() -> userInfoJpa.save(UserInfo.builder() //null 경우
                                     .userid(id)
                                     .school(school)
@@ -193,19 +185,8 @@ class ApiService {
                                     .build()));
     }
 
-    public JSONObject FormatRequestKoGptJson(String text){
 
-        JSONObject jsonObject = new JSONObject();
-
-        jsonObject.put("model","text-davinci-003");
-        jsonObject.put("prompt",text);
-        jsonObject.put("max_tokens",120);
-        jsonObject.put("temperature",0.2);
-
-        return jsonObject;
-    }
-
-    public JSONObject FormatKakaoBody(JSONObject KakaoObject) {
+    public JSONObject formatKakaoBody(JSONObject KakaoObject) {
 
         Assert.notNull(KakaoObject,"KakaoObject cannot be null");
 
@@ -215,8 +196,7 @@ class ApiService {
         return jsonObject;
     }
 
-    public JSONObject FormatKakaoBodyDetail(JSONObject kakaoObject){
-
+    public JSONObject formatKakaoBodyDetail(JSONObject kakaoObject){
         Objects.requireNonNull(kakaoObject);
 
         return kakaoObject.getJSONObject("action").getJSONObject("detailParams").getJSONObject("sys_date");
@@ -226,11 +206,8 @@ class ApiService {
         return jsonArray.getJSONObject(1).getJSONArray("row");
     }
 
-
-    public JSONArray FormatDietJson(String diet){
-
+    public JSONArray formatDietJson(String diet,Integer dateCount){
         JSONArray carousel = new JSONArray();
-
         JSONObject jsonObject = new JSONObject(diet);
 
         log.info(jsonObject.toString());
@@ -241,31 +218,27 @@ class ApiService {
 
             jsonArray = schoolInfo(jsonArray);
 
-            Collections.sort(jsonArray.toList(),(j1, j2) -> {
-                JSONObject jsonObject1 = (JSONObject) j1;
-                JSONObject jsonObject2 = (JSONObject) j2;
-                return LocalDate.parse((String) jsonObject1.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")).compareTo(LocalDate.parse((String) jsonObject2.get("MLSV_YMD"), DateTimeFormatter.ofPattern("yyyyMMdd")));
-            });
-
-            log.info(jsonArray.toString());
-
             for (int i = 0; i < jsonArray.length(); i++) {
-
-
                 jsonObject = jsonArray.getJSONObject(i);
 
-//                if (Objects.equals(jsonObject.getString("MMEAL_SC_NM"), "중식")) {
-
+                if (dateCount == 1){
                     JSONObject basicCard = ((TextCard) jsonFactory.createJSON(KakaoChatBotResponseType.TextCard))
+                            .setText(MakeFormat(jsonObject))
+                            .setButton("공유", "share", null)
+                            .build();
+
+                    carousel.put(basicCard);
+                } else {
+                    if (Objects.equals(jsonObject.getString("MMEAL_SC_NM"), "중식")) {
+                        JSONObject basicCard = ((TextCard) jsonFactory.createJSON(KakaoChatBotResponseType.TextCard))
                                 .setText(MakeFormat(jsonObject))
                                 .setButton("공유", "share", null)
                                 .build();
 
-                    carousel.put(basicCard);
-
-//                }
+                        carousel.put(basicCard);
+                    }
+                }
             }
-
         }else {
             ((BasicCard) jsonFactory.createJSON(KakaoChatBotResponseType.BasicCard))
                     .setDescription(MakeFormat(null));
@@ -274,60 +247,37 @@ class ApiService {
         return carousel;
     }
 
-
-//    public String TimeFormat(JSONObject jsonObject){
-//
-//        LocalDate now = LocalDate.parse((String) jsonObject.get("date"), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-//
-//        return now.format(formatter);
-//    }
-
-    public String TimeFormat(LocalDate localDate,DateTimeFormatter dateTimeFormatter){
-
-        LocalDate date = LocalDate.parse(localDate.toString(),dateTimeFormatter);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+    public String TimeFormat(LocalDate localDate, DateTimeFormatter formatter){
 
         return localDate.format(formatter);
     }
 
 
-//    public JSONObject SchoolSelect(String SCHUL_NM,JSONArray jsonArray){
-//
-//        JSONObject jsonObject = new JSONObject();
-//
-//         for (int i = 0; i <= jsonArray.length(); i++) {
-//            jsonObject = jsonArray.getJSONObject(i);
-//            if (jsonObject.getString("SCHUL_NM").equals(SCHUL_NM))
-//                return jsonObject;
-//        }
-//
-//        return null;
-//    }
 
 
 
-    public void ncp(String content){
+    @Deprecated
+    public void ncp(String content) {
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://sens.apigw.ntruss.com")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader("x-ncp-apigw-timestamp",Long.toString(System.currentTimeMillis()))
+                .defaultHeader("x-ncp-apigw-timestamp", Long.toString(System.currentTimeMillis()))
 //                .defaultHeader("x-ncp-iam-access-key", ApiKey.NcpAccessKey.getKey())
 //                .defaultHeader("x-ncp-apigw-signature-v2",makeSignature(Long.toString(System.currentTimeMillis()),"POST","/sms/v2/services/"+ApiKey.serviceId.getKey()+"/messages"))
                 .build();
 
         JSONObject data = new JSONObject();
-        data.put("type","sms");
-        data.put("from","");
-        data.put("content",content);
+        data.put("type", "sms");
+        data.put("from", "");
+        data.put("content", content);
 
         JSONObject object = new JSONObject();
 
         JSONArray json = new JSONArray();
-        object.put("to","");
-        json.put(0,object);
-        data.put("messages",json);
+        object.put("to", "");
+        json.put(0, object);
+        data.put("messages", json);
         object = null; //다 쓴 참조 해제
         json = null;
 
@@ -340,11 +290,7 @@ class ApiService {
                 .bodyToMono(String.class)
                 .subscribe(log::info);
     }
-
-    public String deleteLineSeparator(String targetStr) {
-        return targetStr.replaceAll("(\r\n|\r|\n|\n\r)", "");
-    }
-
+    @Deprecated //고쳐야 됨 종속성이 너무 강함
     public JSONObject kakaoResponse(kakaoResponseType kakaoResponseType, @Nullable String content, @Nullable JSONArray jsonArray){ // 메서드 고쳐야 됨!!
 
         JSONObject jsonObject = new JSONObject();
@@ -393,8 +339,8 @@ class ApiService {
         String content = jsonObject.getString("DDISH_NM").replace("<br/>", "");
         String mmeal_sc_nm = jsonObject.getString("MMEAL_SC_NM");
 
-        if (date != null)
-            sb.append(date).append(" ").append("[").append(mmeal_sc_nm).append("]").append("\n");
+        sb.append(date).append(" ").append("[").append(mmeal_sc_nm).append("]").append("\n");
+
         if (content == null)
             return sb.append("급식이 없습니다").toString();
 
@@ -417,36 +363,7 @@ class ApiService {
         return sb.toString();
     }
 
-
-//    public String MakeFormat(String content){
-//
-//        StringBuilder sb = new StringBuilder();
-//
-////        if (date != null)
-////            sb.append(date).append("\n");
-//
-//        if (content == null)
-//            return sb.append("급식이 없습니다").toString();
-//
-//        boolean r = true;
-//        String w = "";
-//
-//        for (int i = 0; i < content.length(); i++) {
-//            String q = String.valueOf(content.charAt(i));
-//            if (!q.equals(" ")) {
-//                //                    sb.append(" ");
-//                if (!q.equals("(") && r) {
-//                    sb.append(q);
-//                } else r = q.equals(")");
-//            }else if (!w.equals(" ")){
-//                sb.append("\n");
-//            }
-//            w = q;
-//        }
-//        sb.append("\n");
-//        return sb.toString();
-//    }
-
+    @Deprecated
     public String makeSignature(String timeStamp, String method, String url){
 
         String encodeBase64String = null;

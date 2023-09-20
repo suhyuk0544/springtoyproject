@@ -8,7 +8,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.WebDataBinder;
@@ -31,6 +30,8 @@ import java.net.URISyntaxException;
 
 import java.security.SecureRandom;
 import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 
@@ -72,38 +73,48 @@ public class WebController{
     public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody HashMap<String,Object> kakaoMap){
 
         JSONObject kakaoJson = new JSONObject(kakaoMap);
-        log.info(kakaoJson.toString());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
+        int dateCount;
         URI uri;
         try {
-            if (userService.getUserInfoId(kakaoJson).isEmpty())
+            if (userService.getId(kakaoJson).isEmpty())
                 return ResponseEntity.badRequest().build();
 
-            Optional<URIBuilder> uriBuilder = apiService.kakao(kakaoJson,userService.getUserInfoId(kakaoJson).get());
-
-//            if (uriBuilder.isEmpty())
-//                return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
-//                                                .map(text -> apiService.kakaoResponse(kakaoResponseType.simpleText,text,null).toString()),HttpStatus.OK);
-            if (uriBuilder.isEmpty())
+            Optional<URIBuilder> optionalURIBuilder = apiService.kakaoUserSchoolInfoUriBuilder(userService.getId(kakaoJson).get());
+            if (optionalURIBuilder.isEmpty())
                 return new ResponseEntity<>(Mono.just("유저 정보는 있으나 다른 데이터가 문제 있습니다")
                                                 .map(text -> ((SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText))
                                                         .setText(text)
                                                         .createMainJsonObject()
                                                         .toString()),HttpStatus.OK);
+            URIBuilder uriBuilder = optionalURIBuilder.get();
+            HashMap<String,LocalDate> localDates = apiService.getDateAtJsonObject(apiService.formatKakaoBodyDetail(kakaoJson).getString("origin").replace(" ",""));
 
-            uri = uriBuilder.get().build();
 
+            if (localDates.size() == 1){
+                uriBuilder.addParameter("MLSV_YMD",localDates.get("MLSV_YMD").format(formatter));
+                dateCount = 1;
+            }else {
+                uriBuilder.addParameter("MLSV_FROM_YMD",localDates.get("MLSV_FROM_YMD").format(formatter))
+                        .addParameter("MLSV_TO_YMD", localDates.get("MLSV_TO_YMD").format(formatter));
+                dateCount = Period.between(localDates.get("MLSV_FROM_YMD"),localDates.get("MLSV_TO_YMD")).getDays();
+            }
+
+            uri = uriBuilder.build();
         } catch (URISyntaxException e) {
             return ResponseEntity.badRequest().build();
         } catch (NoSuchElementException e){
             return new ResponseEntity<>(Mono.just("유저 정보가 없습니다")
-                    .map(text -> ((SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText)).setText(text).createMainJsonObject().toString()),HttpStatus.OK);
+                    .map(text ->
+                        ((SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText)).setText(text).createMainJsonObject().toString())
+            ,HttpStatus.OK);
         }
 
-
+        int finalDateCount = dateCount;
         return new ResponseEntity<>(apiService.neisApi(uri.toString())
                 .map(dietJson -> JsonFactory.mainJsonObject(SkillVersion.VERSION2.getVersion()
-                        ,JsonFactory.createCarousel(KakaoChatBotResponseType.TextCard,apiService.FormatDietJson(dietJson))).toString())
+                        ,JsonFactory.createCarousel(KakaoChatBotResponseType.TextCard,apiService.formatDietJson(dietJson,finalDateCount))).toString())
                 ,HttpStatus.OK);
     }
 
@@ -112,19 +123,19 @@ public class WebController{
 
         JSONObject kakaoJson = new JSONObject(kakaoMap);
 
-        if (userService.getUserInfoId(kakaoJson).isEmpty())
+        if (userService.getId(kakaoJson).isEmpty())
             return ResponseEntity.badRequest().build();
 
         SimpleText simpleText = (SimpleText) jsonFactory.createJSON(KakaoChatBotResponseType.SimpleText);
 
-        return userService.getUserInfo(userService.getUserInfoId(kakaoJson).get())
+        return userService.getData(userService.getId(kakaoJson).get())
                     .map(info -> new ResponseEntity<>(simpleText.setText("당신은 " + info.getSchool().getSCHUL_NM() + " 로 \n설정 되어 있습니다.").createMainJsonObject().toString(), HttpStatus.OK))
                     .orElseGet(() -> new ResponseEntity<>(simpleText.setText("유저 정보가 없습니다").createMainJsonObject().toString(), HttpStatus.OK));
     }
 
 
     @Scheduled(fixedDelay = 30 * 60 * 1000)
-    public void onApplicationEvent(){
+    public void onApplicationEvent() {
         try {
             apiService.neisApi(apiService.kakao(LocalDate.now()).build().toString())
                     .subscribe();
@@ -133,50 +144,13 @@ public class WebController{
         }
     }
 
-    @RequestMapping(value = "/KakaoBot/ChatGpt",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<String> Kakao(@RequestBody JSONObject kakaoJson){
-
-        JSONObject request = apiService.FormatRequestKoGptJson((String) apiService.FormatKakaoBody(kakaoJson).get("sys_constant"));
-
-        WebClient webClient = WebClient.builder()
-                .baseUrl("https://api.openai.com")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE,MediaType.APPLICATION_JSON_VALUE)
-//                .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer " + ApiKey.OPENAIAPIKEY.getKey())
-                .build();
-
-
-
-        return webClient.post()
-                .uri("/v1/completions")
-                .bodyValue(request.toString())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .onStatus(
-                        httpStatus -> httpStatus != HttpStatus.OK,
-                        clientResponse -> clientResponse.createException()
-                                .flatMap(it -> Mono.error(new RuntimeException("code : " + clientResponse.statusCode()))))
-                .bodyToMono(String.class)
-                .onErrorResume(throwable -> Mono.error(new RuntimeException(throwable)))
-                .map(responseBody -> {
-                    JSONObject response = new JSONObject(responseBody);
-
-                    JSONArray jsonArray = response.getJSONArray("choices");
-
-                    response = jsonArray.getJSONObject(0);
-
-                    response = apiService.kakaoResponse(kakaoResponseType.simpleText,apiService.deleteLineSeparator(response.getString("text")),null);
-
-                    return response.toString();
-                });
-    }
-
 
     @RequestMapping(value = "/KakaoBot/school",method = {RequestMethod.POST},produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Mono<String>> School(@RequestBody HashMap<String,Object> kakaoMap){
 
         JSONObject kakaoJson = new JSONObject(kakaoMap);
 
-        JSONObject jsonObject = apiService.FormatKakaoBody(kakaoJson);
+        JSONObject jsonObject = apiService.formatKakaoBody(kakaoJson);
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("https://open.neis.go.kr")
@@ -213,7 +187,7 @@ public class WebController{
 
         log.info(json.toString());
 
-        Optional<String> str = userService.getUserInfoId(json);
+        Optional<String> str = userService.getId(json);
 
         if (str.isEmpty())
             return ResponseEntity.badRequest().build();

@@ -1,7 +1,7 @@
 package com.example.springtoyproject.UserInfo;
 
 import com.example.springtoyproject.School.School;
-import lombok.AllArgsConstructor;
+import com.example.springtoyproject.config.MainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,15 +14,17 @@ import java.util.Optional;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements MainService {
 
     private final UserInfoJpa userInfoJpa;
 
-    public Optional<UserInfo> getUserInfo(String id){
+    @Override
+    public Optional<UserInfo> getData(String id){
         return userInfoJpa.findById(id);
     }
 
-    public Optional<String> getUserInfoId(JSONObject jsonObject) {
+    @Override
+    public Optional<String> getId(JSONObject jsonObject) {
 
         if (!jsonObject.has("userRequest")){
             return Optional.empty();
@@ -33,8 +35,7 @@ public class UserService {
     }
 
     public Optional<School> getSchoolByUserInfo(String id) {
-        return getUserInfo(id).map(UserInfo::getSchool);
+        return getData(id).map(UserInfo::getSchool);
     }
-
 
 }
