@@ -50,12 +50,6 @@ public class WebController{
 
 //    private final ConversionService conversionService;
 
-    @InitBinder
-    public void initBinder(WebDataBinder dataBinder){
-
-//        dataBinder.setConversionService(conversionService);
-//        dataBinder.registerCustomEditor(JSONObject.class,new JsonPropertyEditor());
-    }
 
     @Autowired
     public WebController(UserService userService, ApiService apiService, @Qualifier("mainJson") KakaoChatBotResponseJSONFactory jsonFactory, @Qualifier("ElementJson") KakaoChatBotResponseJSONFactory commonElement){
@@ -73,10 +67,9 @@ public class WebController{
     public ResponseEntity<Mono<String>> KakaoBotDiet(@RequestBody HashMap<String,Object> kakaoMap){
 
         JSONObject kakaoJson = new JSONObject(kakaoMap);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-        int dateCount;
         URI uri;
+        HashMap<String,LocalDate> localDates;
         try {
             if (userService.getId(kakaoJson).isEmpty())
                 return ResponseEntity.badRequest().build();
@@ -88,20 +81,11 @@ public class WebController{
                                                         .setText(text)
                                                         .createMainJsonObject()
                                                         .toString()),HttpStatus.OK);
+
             URIBuilder uriBuilder = optionalURIBuilder.get();
-            HashMap<String,LocalDate> localDates = apiService.getDateAtJsonObject(apiService.formatKakaoBodyDetail(kakaoJson).getString("origin").replace(" ",""));
+            localDates = apiService.getDateAtJsonObject(apiService.formatKakaoBodyDetail(kakaoJson).getString("origin").replace(" ",""));
 
-
-            if (localDates.size() == 1){
-                uriBuilder.addParameter("MLSV_YMD",localDates.get("MLSV_YMD").format(formatter));
-                dateCount = 1;
-            }else {
-                uriBuilder.addParameter("MLSV_FROM_YMD",localDates.get("MLSV_FROM_YMD").format(formatter))
-                        .addParameter("MLSV_TO_YMD", localDates.get("MLSV_TO_YMD").format(formatter));
-                dateCount = Period.between(localDates.get("MLSV_FROM_YMD"),localDates.get("MLSV_TO_YMD")).getDays();
-            }
-
-            uri = uriBuilder.build();
+            uri = apiService.addRequestDateParam(uriBuilder,localDates).build();
         } catch (URISyntaxException e) {
             return ResponseEntity.badRequest().build();
         } catch (NoSuchElementException e){
@@ -111,10 +95,9 @@ public class WebController{
             ,HttpStatus.OK);
         }
 
-        int finalDateCount = dateCount;
         return new ResponseEntity<>(apiService.neisApi(uri.toString())
                 .map(dietJson -> JsonFactory.mainJsonObject(SkillVersion.VERSION2.getVersion()
-                        ,JsonFactory.createCarousel(KakaoChatBotResponseType.TextCard,apiService.formatDietJson(dietJson,finalDateCount))).toString())
+                        ,JsonFactory.createCarousel(KakaoChatBotResponseType.TextCard,apiService.formatDietJson(dietJson,apiService.countDatePeriod(localDates)))).toString())
                 ,HttpStatus.OK);
     }
 

@@ -174,7 +174,7 @@ class ApiService {
                 .SCHUL_NM(jsonObject.getString("SCHUL_NM"))
                 .build();
 
-        if (schoolJpa.findBySD_SCHUL_CODE(jsonObject.getString("SD_SCHUL_CODE")).isEmpty())
+        if (schoolJpa.findBySD_SCHUL_CODE(school.getSD_SCHUL_CODE()).isEmpty())
             schoolJpa.save(school);
 
         userInfoJpa.findById(id).ifPresentOrElse(user -> user.update(entityManager.find(School.class,jsonObject.getString("SD_SCHUL_CODE"))) //트랜잭션 변경감지 사용해서 수정
@@ -185,6 +185,27 @@ class ApiService {
                                     .build()));
     }
 
+    public URIBuilder addRequestDateParam(URIBuilder uriBuilder,HashMap<String,LocalDate> localDates){
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        if (localDates.size() == 1){
+            uriBuilder.addParameter("MLSV_YMD",localDates.get("MLSV_YMD").format(formatter));
+        }else {
+            uriBuilder.addParameter("MLSV_FROM_YMD",localDates.get("MLSV_FROM_YMD").format(formatter))
+                    .addParameter("MLSV_TO_YMD", localDates.get("MLSV_TO_YMD").format(formatter));
+        }
+        return uriBuilder;
+    }
+
+    public Integer countDatePeriod(HashMap<String,LocalDate> localDates){
+        int dateCount;
+        if (localDates.size() == 1){
+            dateCount = 1;
+        }else {
+            dateCount = Period.between(localDates.get("MLSV_FROM_YMD"),localDates.get("MLSV_TO_YMD")).getDays();
+        }
+        return dateCount;
+    }
 
     public JSONObject formatKakaoBody(JSONObject KakaoObject) {
 
