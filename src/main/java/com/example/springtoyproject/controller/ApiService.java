@@ -207,6 +207,7 @@ class ApiService {
         return dateCount;
     }
 
+    //프록시나 AOP로 빼야함
     public JSONObject formatKakaoBody(JSONObject KakaoObject) {
 
         Assert.notNull(KakaoObject,"KakaoObject cannot be null");
@@ -231,6 +232,8 @@ class ApiService {
         JSONArray carousel = new JSONArray();
         JSONObject jsonObject = new JSONObject(diet);
 
+        int num = dateCount;
+
         log.info(jsonObject.toString());
 
         if (jsonObject.has("mealServiceDietInfo")) {
@@ -240,37 +243,32 @@ class ApiService {
             jsonArray = schoolInfo(jsonArray);
 
             for (int i = 0; i < jsonArray.length(); i++) {
+
                 jsonObject = jsonArray.getJSONObject(i);
 
-                if (dateCount == 1){
-                    JSONObject basicCard = ((TextCard) jsonFactory.createJSON(KakaoChatBotResponseType.TextCard))
-                            .setText(MakeFormat(jsonObject))
-                            .setButton("공유", "share", null)
-                            .build();
-
-                    carousel.put(basicCard);
-                } else {
-                    if (Objects.equals(jsonObject.getString("MMEAL_SC_NM"), "중식")) {
-                        JSONObject basicCard = ((TextCard) jsonFactory.createJSON(KakaoChatBotResponseType.TextCard))
-                                .setText(MakeFormat(jsonObject))
-                                .setButton("공유", "share", null)
-                                .build();
-
-                        carousel.put(basicCard);
-                    }
+                if (num == 1) {
+                    carousel.put(createDietTextCard(jsonObject));
+                }else {
+                    if (Objects.equals(jsonObject.getString("MMEAL_SC_NM"), "중식"))
+                        carousel.put(createDietTextCard(jsonObject));
                 }
             }
         }else {
-            ((BasicCard) jsonFactory.createJSON(KakaoChatBotResponseType.BasicCard))
-                    .setDescription(MakeFormat(null));
+            carousel.put(((TextCard) jsonFactory.createJSON(KakaoChatBotResponseType.TextCard))
+                    .setText(MakeFormat(null))
+                    .setButton("공유", "share", null)
+                    .build());
         }
 
         return carousel;
     }
 
-    public String TimeFormat(LocalDate localDate, DateTimeFormatter formatter){
+    public JSONObject createDietTextCard(JSONObject jsonObject){
 
-        return localDate.format(formatter);
+        return ((TextCard) jsonFactory.createJSON(KakaoChatBotResponseType.TextCard))
+                .setText(MakeFormat(jsonObject))
+                .setButton("공유", "share", null)
+                .build();
     }
 
 
@@ -361,9 +359,6 @@ class ApiService {
         String mmeal_sc_nm = jsonObject.getString("MMEAL_SC_NM");
 
         sb.append(date).append(" ").append("[").append(mmeal_sc_nm).append("]").append("\n");
-
-        if (content == null)
-            return sb.append("급식이 없습니다").toString();
 
         boolean r = true;
         String w = "";
